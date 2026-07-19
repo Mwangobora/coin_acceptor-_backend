@@ -9,12 +9,16 @@ const config: Config = {
   },
   collectCoverageFrom: [
     'src/apps/auth/**/*.ts',
-    'src/apps/audit-logs/audit-logs.service.ts',
+    'src/apps/users/**/*.ts',
+    'src/apps/access-control/**/*.ts',
+    'src/apps/audit-logs/**/*.ts',
+    '!src/apps/**/*.module.ts',
+    '!src/apps/**/dto/**/*.ts',
+    '!src/apps/**/types/**/*.ts',
+    '!src/apps/**/decorators/**/*.ts',
+    '!src/apps/**/constants/**/*.ts',
+    '!src/apps/**/mappers/**/*.ts',
     '!src/apps/auth/**/*.module.ts',
-    '!src/apps/auth/constants/**/*.ts',
-    '!src/apps/auth/decorators/**/*.ts',
-    '!src/apps/auth/dto/**/*.ts',
-    '!src/apps/auth/types/**/*.ts',
   ],
   coverageThreshold: {
     global: {

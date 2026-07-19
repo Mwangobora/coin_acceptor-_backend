@@ -5,13 +5,24 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Reflector } from '@nestjs/core';
 
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import type { AuthRequest } from '../types/auth-request.type';
 import type { AuthenticatedUser } from '../types/authenticated-user.type';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
+  constructor(private readonly reflector?: Reflector) {
+    super();
+  }
+
   override async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector?.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
     const canActivate = (await super.canActivate(context)) as boolean;
     const request = context.switchToHttp().getRequest<AuthRequest>();
     this.blockPasswordChangeRequired(request);

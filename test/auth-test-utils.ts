@@ -3,6 +3,7 @@ import type { INestApplication } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as argon2 from 'argon2';
 import type { Server } from 'node:http';
+import request from 'supertest';
 
 export const testDatabaseUrl =
   'postgresql://postgres:postgres@localhost:5432/charging_system_test?schema=charging_system';
@@ -60,6 +61,54 @@ export async function createUser(
       must_change_password: input.mustChangePassword ?? false,
     },
   });
+}
+
+export async function grantPermissions(
+  prisma: PrismaClient,
+  userId: string,
+  codes: string[],
+  stationId?: string,
+) {
+  const permissions = await Promise.all(
+    codes.map((code) => {
+      const [module, action] = code.split('.');
+      return prisma.permissions.upsert({
+        where: { code },
+        create: { code, module, action, description: code },
+        update: {},
+      });
+    }),
+  );
+  const role = await prisma.roles.create({
+    data: {
+      code: `test_role_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+      name: 'Test Role',
+      status: 'active',
+    },
+  });
+  await prisma.role_permissions.createMany({
+    data: permissions.map((permission) => ({
+      role_id: role.id,
+      permission_id: permission.id,
+    })),
+    skipDuplicates: true,
+  });
+  await prisma.user_role_assignments.create({
+    data: { user_id: userId, role_id: role.id, station_id: stationId },
+  });
+  return { role, permissions };
+}
+
+export async function loginCookies(
+  server: Parameters<typeof request>[0],
+  email: string,
+  password = 'CorrectPassword123!',
+) {
+  const response = await request(server)
+    .post('/api/v1/auth/login')
+    .send({ email, password })
+    .expect(201);
+  return cookieHeader(response);
 }
 
 export function cookieHeader(response: { headers: Record<string, unknown> }) {
