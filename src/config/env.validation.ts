@@ -13,6 +13,7 @@ export type EnvironmentVariables = {
   COOKIE_SECURE: boolean;
   COOKIE_SAME_SITE: 'lax' | 'strict' | 'none';
   DEVICE_AUTH_ENABLED: boolean;
+  DEVICE_CREDENTIAL_ENCRYPTION_KEY: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL: string;
@@ -94,6 +95,20 @@ function parseSameSite(value: unknown) {
   return sameSite as 'lax' | 'strict' | 'none';
 }
 
+function parseEncryptionKey(config: Record<string, unknown>, nodeEnv: string) {
+  const fallback =
+    nodeEnv === 'production' ? undefined : '0123456789abcdef0123456789abcdef';
+  const value = optionalString(
+    config,
+    'DEVICE_CREDENTIAL_ENCRYPTION_KEY',
+    fallback ?? '',
+  );
+  if (value.length !== 32) {
+    throw new Error('DEVICE_CREDENTIAL_ENCRYPTION_KEY must be 32 characters.');
+  }
+  return value;
+}
+
 export function validateEnv(config: Record<string, unknown>) {
   const nodeEnv = requireValue(config, 'NODE_ENV');
   if (!environments.has(nodeEnv)) {
@@ -129,6 +144,7 @@ export function validateEnv(config: Record<string, unknown>) {
     COOKIE_SECURE: parseBoolean(config.COOKIE_SECURE, nodeEnv === 'production'),
     COOKIE_SAME_SITE: parseSameSite(config.COOKIE_SAME_SITE),
     DEVICE_AUTH_ENABLED: parseBoolean(config.DEVICE_AUTH_ENABLED, false),
+    DEVICE_CREDENTIAL_ENCRYPTION_KEY: parseEncryptionKey(config, nodeEnv),
     JWT_ACCESS_SECRET: optionalString(
       config,
       'JWT_ACCESS_SECRET',

@@ -5,6 +5,9 @@ export const securityConfig = registerAs('security', () => ({
   cookieSecure: process.env.COOKIE_SECURE === 'true',
   cookieSameSite: process.env.COOKIE_SAME_SITE ?? 'lax',
   deviceAuthEnabled: process.env.DEVICE_AUTH_ENABLED === 'true',
+  deviceCredentialEncryptionKey:
+    process.env.DEVICE_CREDENTIAL_ENCRYPTION_KEY ??
+    '0123456789abcdef0123456789abcdef',
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
   jwtAccessTtl: process.env.JWT_ACCESS_TTL ?? '7d',

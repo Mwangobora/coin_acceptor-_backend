@@ -62,5 +62,14 @@ function allowsDeferredStationScope(code: string): boolean {
     'devices.read',
     'devices.update',
     'devices.disable',
+    'device_credentials.read',
+    'device_credentials.create',
+    'device_credentials.rotate',
+    'device_credentials.revoke',
+    'device_credentials.force_revoke',
+    'lockers.read',
+    'lockers.configure',
+    'charging_ports.read',
+    'charging_ports.configure',
   ].includes(code);
 }

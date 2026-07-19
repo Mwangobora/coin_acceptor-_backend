@@ -1,0 +1,20 @@
+export type ChargingPortResponse = {
+  id: string;
+  deviceId: string;
+  lockerId: string;
+  portNumber: number;
+  portType: string;
+  hardwareChannel: string | null;
+  status: string;
+  powerState: string;
+  maximumVoltage: string | null;
+  maximumCurrentMa: number | null;
+  maximumPowerWatts: string | null;
+  lastStatusChangedAt: string | null;
+  maintenanceReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  locker?: { id: string; lockerNumber: number; label: string | null };
+  device?: { id: string; stationId: string; deviceCode: string; name: string };
+  hasActiveSession?: boolean;
+};
