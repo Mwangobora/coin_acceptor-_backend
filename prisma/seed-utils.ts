@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+import * as argon2 from 'argon2';
 
 export type SeedRow = Record<
   string,
@@ -32,7 +32,7 @@ export function requireSeedEnv(key: string): string {
 }
 
 export async function hashSecret(value: string): Promise<string> {
-  return bcrypt.hash(value, 12);
+  return String(await argon2.hash(value, { type: argon2.argon2id }));
 }
 
 export async function insertRow(

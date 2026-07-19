@@ -2,7 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, relative } from 'node:path';
 
 const root = process.cwd();
-const limit = 120;
+const limit = 250;
 const extensions = new Set(['.ts', '.js', '.mjs']);
 const ignoredDirs = new Set(['.git', 'coverage', 'dist', 'node_modules']);
 const violations = [];

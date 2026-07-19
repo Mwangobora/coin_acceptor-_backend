@@ -11,7 +11,15 @@ export type EnvironmentVariables = {
   SWAGGER_ENABLED: boolean;
   CORS_ORIGIN: string;
   COOKIE_SECURE: boolean;
+  COOKIE_SAME_SITE: 'lax' | 'strict' | 'none';
   DEVICE_AUTH_ENABLED: boolean;
+  JWT_ACCESS_SECRET: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_ACCESS_TTL: string;
+  JWT_REFRESH_TTL: string;
+  AUTH_MAX_FAILED_ATTEMPTS: number;
+  AUTH_LOCK_MINUTES: number;
+  AUTH_MIN_PASSWORD_LENGTH: number;
   REQUEST_SIZE_LIMIT: string;
 };
 
@@ -63,6 +71,29 @@ function parseBoolean(value: unknown, defaultValue: boolean) {
   throw new Error('Boolean environment values must be true or false.');
 }
 
+function parsePositiveInt(value: unknown, key: string, defaultValue: number) {
+  const raw =
+    value === undefined || value === '' ? String(defaultValue) : value;
+  if (typeof raw !== 'string') throw new Error(`${key} must be a number.`);
+  const number = Number(raw);
+  if (!Number.isInteger(number) || number < 1) {
+    throw new Error(`${key} must be a positive integer.`);
+  }
+  return number;
+}
+
+function parseSameSite(value: unknown) {
+  const raw = value === undefined || value === '' ? 'lax' : value;
+  if (typeof raw !== 'string') {
+    throw new Error('COOKIE_SAME_SITE must be lax, strict, or none.');
+  }
+  const sameSite = raw.toLowerCase();
+  if (!['lax', 'strict', 'none'].includes(sameSite)) {
+    throw new Error('COOKIE_SAME_SITE must be lax, strict, or none.');
+  }
+  return sameSite as 'lax' | 'strict' | 'none';
+}
+
 export function validateEnv(config: Record<string, unknown>) {
   const nodeEnv = requireValue(config, 'NODE_ENV');
   if (!environments.has(nodeEnv)) {
@@ -96,7 +127,35 @@ export function validateEnv(config: Record<string, unknown>) {
       'CORS_ORIGIN',
     ),
     COOKIE_SECURE: parseBoolean(config.COOKIE_SECURE, nodeEnv === 'production'),
+    COOKIE_SAME_SITE: parseSameSite(config.COOKIE_SAME_SITE),
     DEVICE_AUTH_ENABLED: parseBoolean(config.DEVICE_AUTH_ENABLED, false),
+    JWT_ACCESS_SECRET: optionalString(
+      config,
+      'JWT_ACCESS_SECRET',
+      'development-access-secret-change-me',
+    ),
+    JWT_REFRESH_SECRET: optionalString(
+      config,
+      'JWT_REFRESH_SECRET',
+      'development-refresh-secret-change-me',
+    ),
+    JWT_ACCESS_TTL: optionalString(config, 'JWT_ACCESS_TTL', '7d'),
+    JWT_REFRESH_TTL: optionalString(config, 'JWT_REFRESH_TTL', '30d'),
+    AUTH_MAX_FAILED_ATTEMPTS: parsePositiveInt(
+      config.AUTH_MAX_FAILED_ATTEMPTS,
+      'AUTH_MAX_FAILED_ATTEMPTS',
+      5,
+    ),
+    AUTH_LOCK_MINUTES: parsePositiveInt(
+      config.AUTH_LOCK_MINUTES,
+      'AUTH_LOCK_MINUTES',
+      15,
+    ),
+    AUTH_MIN_PASSWORD_LENGTH: parsePositiveInt(
+      config.AUTH_MIN_PASSWORD_LENGTH,
+      'AUTH_MIN_PASSWORD_LENGTH',
+      12,
+    ),
     REQUEST_SIZE_LIMIT: optionalString(config, 'REQUEST_SIZE_LIMIT', '1mb'),
   } satisfies EnvironmentVariables;
 }
