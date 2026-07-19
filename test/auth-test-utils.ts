@@ -18,8 +18,11 @@ export async function createTestApp(): Promise<{
   process.env.API_PREFIX = 'api/v1';
   process.env.FRONTEND_URL = 'http://localhost:3000';
   process.env.DATABASE_URL = testDatabaseUrl;
+  process.env.REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
   process.env.DEVICE_CREDENTIAL_ENCRYPTION_KEY =
     '0123456789abcdef0123456789abcdef';
+  process.env.DEVICE_HMAC_CLOCK_SKEW_SECONDS = '300';
+  process.env.DEVICE_EVENT_MAX_FUTURE_SECONDS = '300';
   process.env.JWT_ACCESS_SECRET = 'test-access-secret';
   process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
   process.env.JWT_ACCESS_TTL = '7d';

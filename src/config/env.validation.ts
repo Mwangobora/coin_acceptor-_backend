@@ -8,12 +8,15 @@ export type EnvironmentVariables = {
   API_PREFIX: string;
   FRONTEND_URL: string;
   DATABASE_URL: string;
+  REDIS_URL: string;
   SWAGGER_ENABLED: boolean;
   CORS_ORIGIN: string;
   COOKIE_SECURE: boolean;
   COOKIE_SAME_SITE: 'lax' | 'strict' | 'none';
   DEVICE_AUTH_ENABLED: boolean;
   DEVICE_CREDENTIAL_ENCRYPTION_KEY: string;
+  DEVICE_HMAC_CLOCK_SKEW_SECONDS: number;
+  DEVICE_EVENT_MAX_FUTURE_SECONDS: number;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL: string;
@@ -129,6 +132,10 @@ export function validateEnv(config: Record<string, unknown>) {
       requireValue(config, 'DATABASE_URL'),
       'DATABASE_URL',
     ),
+    REDIS_URL: parseUrl(
+      optionalString(config, 'REDIS_URL', 'redis://localhost:6379'),
+      'REDIS_URL',
+    ),
     SWAGGER_ENABLED: parseBoolean(
       config.SWAGGER_ENABLED,
       nodeEnv !== 'production',
@@ -145,6 +152,16 @@ export function validateEnv(config: Record<string, unknown>) {
     COOKIE_SAME_SITE: parseSameSite(config.COOKIE_SAME_SITE),
     DEVICE_AUTH_ENABLED: parseBoolean(config.DEVICE_AUTH_ENABLED, false),
     DEVICE_CREDENTIAL_ENCRYPTION_KEY: parseEncryptionKey(config, nodeEnv),
+    DEVICE_HMAC_CLOCK_SKEW_SECONDS: parsePositiveInt(
+      config.DEVICE_HMAC_CLOCK_SKEW_SECONDS,
+      'DEVICE_HMAC_CLOCK_SKEW_SECONDS',
+      300,
+    ),
+    DEVICE_EVENT_MAX_FUTURE_SECONDS: parsePositiveInt(
+      config.DEVICE_EVENT_MAX_FUTURE_SECONDS,
+      'DEVICE_EVENT_MAX_FUTURE_SECONDS',
+      300,
+    ),
     JWT_ACCESS_SECRET: optionalString(
       config,
       'JWT_ACCESS_SECRET',

@@ -8,6 +8,13 @@ export const securityConfig = registerAs('security', () => ({
   deviceCredentialEncryptionKey:
     process.env.DEVICE_CREDENTIAL_ENCRYPTION_KEY ??
     '0123456789abcdef0123456789abcdef',
+  deviceHmacClockSkewSeconds: Number(
+    process.env.DEVICE_HMAC_CLOCK_SKEW_SECONDS ?? 300,
+  ),
+  deviceEventMaxFutureSeconds: Number(
+    process.env.DEVICE_EVENT_MAX_FUTURE_SECONDS ?? 300,
+  ),
+  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
   jwtAccessTtl: process.env.JWT_ACCESS_TTL ?? '7d',
