@@ -24,6 +24,8 @@ export type AuditLogInput = {
   metadata?: Prisma.InputJsonObject;
 };
 
+type AuditLogClient = Pick<Prisma.TransactionClient, 'audit_logs'>;
+
 @Injectable()
 export class AuditLogsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -69,8 +71,11 @@ export class AuditLogsService {
     return mapAuditLog(log);
   }
 
-  async record(input: AuditLogInput): Promise<void> {
-    await this.prisma.audit_logs.create({
+  async record(
+    input: AuditLogInput,
+    client: AuditLogClient = this.prisma,
+  ): Promise<void> {
+    await client.audit_logs.create({
       data: {
         actor_type: input.actorUserId ? 'user' : 'system',
         actor_user_id: input.actorUserId,

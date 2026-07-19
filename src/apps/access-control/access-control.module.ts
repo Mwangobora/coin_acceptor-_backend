@@ -11,6 +11,7 @@ import { PermissionService } from './services/permission.service';
 import { PermissionsService } from './services/permissions.service';
 import { RoleAssignmentsService } from './services/role-assignments.service';
 import { RolesService } from './services/roles.service';
+import { StationScopeService } from './services/station-scope.service';
 
 @Module({
   imports: [PrismaModule, AuthModule, AuditLogsModule],
@@ -25,7 +26,8 @@ import { RolesService } from './services/roles.service';
     PermissionsService,
     RolesService,
     RoleAssignmentsService,
+    StationScopeService,
   ],
-  exports: [PermissionService, PermissionsGuard],
+  exports: [PermissionService, PermissionsGuard, StationScopeService],
 })
 export class AccessControlModule {}

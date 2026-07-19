@@ -31,7 +31,12 @@ export class PermissionsGuard implements CanActivate {
           request.user.id,
           code,
           stationId,
-        ))
+        )) &&
+        !(
+          !stationId &&
+          allowsDeferredStationScope(code) &&
+          (await this.permissions.hasAnyScopePermission(request.user.id, code))
+        )
       ) {
         throw new ForbiddenException('Missing required permission.');
       }
@@ -47,4 +52,15 @@ export class PermissionsGuard implements CanActivate {
     };
     return typeof source.stationId === 'string' ? source.stationId : undefined;
   }
+}
+
+function allowsDeferredStationScope(code: string): boolean {
+  return [
+    'stations.read',
+    'stations.update',
+    'stations.deactivate',
+    'devices.read',
+    'devices.update',
+    'devices.disable',
+  ].includes(code);
 }

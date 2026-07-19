@@ -18,6 +18,16 @@ export class PermissionService {
     return count > 0;
   }
 
+  async hasAnyScopePermission(
+    userId: string,
+    permissionCode: string,
+  ): Promise<boolean> {
+    const count = await this.prisma.user_role_assignments.count({
+      where: this.anyScopePermissionWhere(userId, permissionCode),
+    });
+    return count > 0;
+  }
+
   async getPermissionCodes(
     userId: string,
     stationId?: string | null,
@@ -90,6 +100,25 @@ export class PermissionService {
           some: { permissions: { code: permissionCode } },
         },
       },
+    };
+  }
+
+  private anyScopePermissionWhere(
+    userId: string,
+    permissionCode: string,
+  ): Prisma.user_role_assignmentsWhereInput {
+    const now = new Date();
+    return {
+      user_id: userId,
+      revoked_at: null,
+      users_user_role_assignments_user_idTousers: { status: 'active' },
+      roles: {
+        status: 'active',
+        role_permissions: {
+          some: { permissions: { code: permissionCode } },
+        },
+      },
+      OR: [{ expires_at: null }, { expires_at: { gt: now } }],
     };
   }
 

@@ -163,8 +163,16 @@ describe('Management APIs', () => {
 
   it('implements global and station-scoped role assignment revocation', async () => {
     const user = await createUser(prisma, { email: 'assignee@example.com' });
-    const role = await prisma.roles.findFirstOrThrow({
-      where: { status: 'active' },
+    const permission = await prisma.permissions.findFirstOrThrow({
+      where: { code: 'users.read' },
+    });
+    const role = await prisma.roles.create({
+      data: {
+        code: `assignable_${Date.now()}`,
+        name: 'Assignable Role',
+        status: 'active',
+        role_permissions: { create: { permission_id: permission.id } },
+      },
     });
     const station = await prisma.stations.create({
       data: {

@@ -1,0 +1,22 @@
+export type StationResponse = {
+  id: string;
+  code: string;
+  name: string;
+  stationType: string;
+  description: string | null;
+  region: string;
+  district: string | null;
+  ward: string | null;
+  address: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  timezone: string;
+  status: string;
+  installedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdByUserId: string | null;
+  totalDevices?: number;
+  activeDevices?: number;
+  offlineDevices?: number;
+};

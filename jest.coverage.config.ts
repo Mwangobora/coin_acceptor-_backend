@@ -12,6 +12,8 @@ const config: Config = {
     'src/apps/users/**/*.ts',
     'src/apps/access-control/**/*.ts',
     'src/apps/audit-logs/**/*.ts',
+    'src/apps/stations/**/*.ts',
+    'src/apps/devices/**/*.ts',
     '!src/apps/**/*.module.ts',
     '!src/apps/**/dto/**/*.ts',
     '!src/apps/**/types/**/*.ts',
