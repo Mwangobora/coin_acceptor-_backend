@@ -41,7 +41,31 @@ docker compose down -v
 
 - Backend: `http://localhost:4000/api/v1`
 - Health: `http://localhost:4000/api/v1/health`
+- Swagger UI: `http://localhost:4000/docs`
+- OpenAPI JSON: `http://localhost:4000/docs-json`
 - PostgreSQL: `localhost:5432`
+
+## Architecture
+
+The backend uses a feature-first modular monolith. Current real modules are
+`health` and `device-ingestion`; planned modules are documented in
+`docs/backend-architecture.md`.
+
+Device communication decisions that still need embedded-team confirmation are
+documented in `docs/device-integration-contract.md`.
+
+## Validation
+
+```bash
+npm run format
+npm run lint
+npm run typecheck
+npm run test
+npm run test:e2e
+npm run build
+npm run check:lines
+docker compose config
+```
 
 ## Frontend
 

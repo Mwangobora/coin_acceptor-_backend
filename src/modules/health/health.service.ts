@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
+import { APPLICATION_NAME } from '../../common/constants/application.constants';
+
 export type HealthResponse = {
   status: 'ok';
-  service: 'charging-system-api';
+  service: typeof APPLICATION_NAME;
   timestamp: string;
 };
 
@@ -11,7 +13,7 @@ export class HealthService {
   getHealth(): HealthResponse {
     return {
       status: 'ok',
-      service: 'charging-system-api',
+      service: APPLICATION_NAME,
       timestamp: new Date().toISOString(),
     };
   }

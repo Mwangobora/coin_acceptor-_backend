@@ -9,10 +9,17 @@ services:
     ports:
       - "${BACKEND_PORT:-4000}:4000"
     environment:
+      APP_NAME: charging-system-api
       NODE_ENV: development
+      HOST: 0.0.0.0
       PORT: 4000
       API_PREFIX: api/v1
       FRONTEND_URL: http://localhost:3000
+      CORS_ORIGIN: http://localhost:3000
+      SWAGGER_ENABLED: "true"
+      COOKIE_SECURE: "false"
+      DEVICE_AUTH_ENABLED: "false"
+      REQUEST_SIZE_LIMIT: 1mb
       DATABASE_URL: postgresql://postgres:postgres@database:5432/charging_system
       CHOKIDAR_USEPOLLING: "true"
     volumes:
