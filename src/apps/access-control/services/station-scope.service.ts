@@ -23,6 +23,14 @@ export class StationScopeService {
     return stationIds === null ? {} : { station_id: { in: stationIds } };
   }
 
+  async paymentWhere(
+    userId: string,
+    permissionCode: string,
+  ): Promise<Prisma.paymentsWhereInput> {
+    const stationIds = await this.authorizedStationIds(userId, permissionCode);
+    return stationIds === null ? {} : { station_id: { in: stationIds } };
+  }
+
   async requireGlobal(userId: string, permissionCode: string): Promise<void> {
     const stationIds = await this.authorizedStationIds(userId, permissionCode);
     if (stationIds !== null) {

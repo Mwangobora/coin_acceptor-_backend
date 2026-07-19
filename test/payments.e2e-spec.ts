@@ -111,8 +111,27 @@ describe('payments', () => {
     const user = await createUser(prisma, {
       email: 'payments-admin@example.com',
     });
-    await grantPermissions(prisma, user.id, ['payments.refund'], stationId);
+    await grantPermissions(
+      prisma,
+      user.id,
+      ['payments.read', 'payments.refund'],
+      stationId,
+    );
     const cookie = await loginCookies(server, user.email);
+    await request(server)
+      .get('/api/v1/payments')
+      .set('Cookie', cookie)
+      .expect(({ body }) =>
+        expect((body as PaymentList).items.length).toBeGreaterThan(0),
+      );
+    await request(server)
+      .get(`/api/v1/payments/${payment.id}`)
+      .set('Cookie', cookie)
+      .expect(({ body }) =>
+        expect((body as PaymentResponse).paymentReference).toBe(
+          payment.paymentReference,
+        ),
+      );
     await request(server)
       .post(`/api/v1/payments/${payment.id}/refund`)
       .set('Cookie', cookie)
@@ -137,6 +156,7 @@ describe('payments', () => {
 });
 
 type PackageList = { items: Array<{ id: string }> };
+type PaymentList = { items: PaymentResponse[] };
 type EventResponse = { processingStatus: string };
 type PaymentResponse = {
   id: string;
