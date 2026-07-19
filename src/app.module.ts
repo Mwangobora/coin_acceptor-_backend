@@ -14,10 +14,12 @@ import { SettingsModule } from './apps/settings/settings.module';
 import { StationsModule } from './apps/stations/stations.module';
 import { UsersModule } from './apps/users/users.module';
 import { ConfigModule } from './config/config.module';
+import { PrismaModule } from './database/prisma.module';
 
 @Module({
   imports: [
     ConfigModule,
+    PrismaModule,
     HealthModule,
     AuthModule,
     UsersModule,

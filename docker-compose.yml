@@ -20,7 +20,7 @@ services:
       COOKIE_SECURE: "false"
       DEVICE_AUTH_ENABLED: "false"
       REQUEST_SIZE_LIMIT: 1mb
-      DATABASE_URL: postgresql://postgres:postgres@database:5432/charging_system
+      DATABASE_URL: postgresql://postgres:postgres@database:5432/charging_system?schema=charging_system
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - .:/app
@@ -40,6 +40,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-charging_system}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./charging_system_source_of_truth.sql:/docker-entrypoint-initdb.d/001-charging-system-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s

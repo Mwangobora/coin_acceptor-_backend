@@ -54,6 +54,8 @@ The backend uses a feature-first modular monolith. Current real modules are
 Device communication decisions that still need embedded-team confirmation are
 documented in `docs/device-integration-contract.md`.
 
+Database setup and seed commands are documented in `docs/database.md`.
+
 ## Validation
 
 ```bash

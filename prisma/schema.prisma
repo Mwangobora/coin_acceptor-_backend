@@ -1,0 +1,675 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model alerts {
+  id                                          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  station_id                                  String             @db.Uuid
+  device_id                                   String?            @db.Uuid
+  locker_id                                   String?            @db.Uuid
+  charging_port_id                            String?            @db.Uuid
+  charging_session_id                         String?            @db.Uuid
+  device_event_id                             String?            @db.Uuid
+  alert_code                                  String             @db.VarChar(80)
+  category                                    String             @db.VarChar(30)
+  severity                                    String             @db.VarChar(20)
+  title                                       String             @db.VarChar(160)
+  message                                     String
+  status                                      String             @default("open") @db.VarChar(20)
+  deduplication_key                           String?            @db.VarChar(180)
+  detected_at                                 DateTime           @db.Timestamptz(6)
+  acknowledged_at                             DateTime?          @db.Timestamptz(6)
+  acknowledged_by_user_id                     String?            @db.Uuid
+  resolved_at                                 DateTime?          @db.Timestamptz(6)
+  resolved_by_user_id                         String?            @db.Uuid
+  resolution_notes                            String?
+  metadata                                    Json               @default("{}")
+  created_at                                  DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                                  DateTime           @default(now()) @db.Timestamptz(6)
+  users_alerts_acknowledged_by_user_idTousers users?             @relation("alerts_acknowledged_by_user_idTousers", fields: [acknowledged_by_user_id], references: [id], onUpdate: NoAction, map: "fk_alerts_acknowledged_by")
+  device_events                               device_events?     @relation(fields: [device_event_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_alerts_device_event")
+  devices                                     devices?           @relation(fields: [device_id, station_id], references: [id, station_id], onUpdate: NoAction, map: "fk_alerts_device_station")
+  lockers                                     lockers?           @relation(fields: [locker_id, device_id], references: [id, device_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_alerts_locker_device")
+  charging_ports                              charging_ports?    @relation(fields: [charging_port_id, locker_id, device_id], references: [id, locker_id, device_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_alerts_port_hierarchy")
+  users_alerts_resolved_by_user_idTousers     users?             @relation("alerts_resolved_by_user_idTousers", fields: [resolved_by_user_id], references: [id], onUpdate: NoAction, map: "fk_alerts_resolved_by")
+  charging_sessions                           charging_sessions? @relation(fields: [charging_session_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_alerts_session")
+  stations                                    stations           @relation(fields: [station_id], references: [id], onUpdate: NoAction, map: "fk_alerts_station")
+
+  @@index([station_id, status, detected_at(sort: Desc)], map: "idx_alerts_station_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model audit_logs {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actor_type      String    @db.VarChar(20)
+  actor_user_id   String?   @db.Uuid
+  actor_device_id String?   @db.Uuid
+  station_id      String?   @db.Uuid
+  action          String    @db.VarChar(120)
+  entity_type     String    @db.VarChar(80)
+  entity_id       String?   @db.Uuid
+  request_id      String?   @db.VarChar(100)
+  ip_address      String?   @db.Inet
+  user_agent      String?
+  reason          String?
+  before_data     Json?
+  after_data      Json?
+  metadata        Json      @default("{}")
+  occurred_at     DateTime  @default(now()) @db.Timestamptz(6)
+  devices         devices?  @relation(fields: [actor_device_id], references: [id], onUpdate: NoAction, map: "fk_audit_logs_actor_device")
+  users           users?    @relation(fields: [actor_user_id], references: [id], onUpdate: NoAction, map: "fk_audit_logs_actor_user")
+  stations        stations? @relation(fields: [station_id], references: [id], onUpdate: NoAction, map: "fk_audit_logs_station")
+
+  @@index([entity_type, entity_id, occurred_at(sort: Desc)], map: "idx_audit_logs_entity")
+  @@index([occurred_at(sort: Desc)], map: "idx_audit_logs_occurred")
+  @@index([occurred_at], map: "idx_audit_logs_occurred_brin", type: Brin)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model auth_sessions {
+  id                      String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                 String          @db.Uuid
+  token_family_id         String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  refresh_token_hash      String          @unique(map: "uq_auth_sessions_refresh_token_hash")
+  rotated_from_session_id String?         @db.Uuid
+  ip_address              String?         @db.Inet
+  user_agent              String?
+  expires_at              DateTime        @db.Timestamptz(6)
+  last_used_at            DateTime?       @db.Timestamptz(6)
+  revoked_at              DateTime?       @db.Timestamptz(6)
+  revoke_reason           String?         @db.VarChar(100)
+  created_at              DateTime        @default(now()) @db.Timestamptz(6)
+  auth_sessions           auth_sessions?  @relation("auth_sessionsToauth_sessions", fields: [rotated_from_session_id], references: [id], onUpdate: NoAction, map: "fk_auth_sessions_rotated_from")
+  other_auth_sessions     auth_sessions[] @relation("auth_sessionsToauth_sessions")
+  users                   users           @relation(fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_auth_sessions_user")
+
+  @@index([expires_at], map: "idx_auth_sessions_expires_at")
+  @@index([token_family_id], map: "idx_auth_sessions_family")
+  @@index([user_id], map: "idx_auth_sessions_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model charging_packages {
+  id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  station_id         String?    @db.Uuid
+  code               String     @db.VarChar(50)
+  name               String     @db.VarChar(100)
+  description        String?
+  duration_seconds   Int
+  price_minor        BigInt
+  currency           String     @default("TZS") @db.Char(3)
+  allow_coin         Boolean    @default(true)
+  allow_qr           Boolean    @default(true)
+  status             String     @default("active") @db.VarChar(20)
+  valid_from         DateTime   @default(now()) @db.Timestamptz(6)
+  valid_until        DateTime?  @db.Timestamptz(6)
+  display_order      Int        @default(0) @db.SmallInt
+  created_at         DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime   @default(now()) @db.Timestamptz(6)
+  created_by_user_id String?    @db.Uuid
+  users              users?     @relation(fields: [created_by_user_id], references: [id], onUpdate: NoAction, map: "fk_charging_packages_created_by")
+  stations           stations?  @relation(fields: [station_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_charging_packages_station")
+  payments           payments[]
+
+  @@index([station_id, status], map: "idx_charging_packages_station_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model charging_ports {
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  device_id              String              @db.Uuid
+  locker_id              String              @db.Uuid
+  port_number            Int                 @db.SmallInt
+  port_type              String              @db.VarChar(20)
+  hardware_channel       String?             @db.VarChar(50)
+  status                 String              @default("available") @db.VarChar(20)
+  power_state            String              @default("off") @db.VarChar(20)
+  maximum_voltage        Decimal?            @db.Decimal(6, 2)
+  maximum_current_ma     Int?
+  maximum_power_watts    Decimal?            @db.Decimal(7, 2)
+  last_status_changed_at DateTime?           @db.Timestamptz(6)
+  maintenance_reason     String?
+  created_at             DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime            @default(now()) @db.Timestamptz(6)
+  alerts                 alerts[]
+  devices                devices             @relation(fields: [device_id], references: [id], onUpdate: NoAction, map: "fk_charging_ports_device")
+  lockers                lockers             @relation(fields: [locker_id, device_id], references: [id, device_id], onUpdate: NoAction, map: "fk_charging_ports_locker_device")
+  charging_sessions      charging_sessions[]
+
+  @@unique([id, locker_id, device_id], map: "uq_charging_ports_id_hierarchy")
+  @@unique([locker_id, port_number], map: "uq_charging_ports_locker_number")
+  @@index([device_id, status], map: "idx_charging_ports_device_status")
+  @@index([locker_id], map: "idx_charging_ports_locker")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model charging_session_payments {
+  id                     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  charging_session_id    String            @db.Uuid
+  payment_id             String            @unique(map: "uq_charging_session_payments_payment") @db.Uuid
+  purpose                String            @db.VarChar(20)
+  duration_seconds_added Int
+  amount_minor           BigInt
+  currency               String            @default("TZS") @db.Char(3)
+  linked_at              DateTime          @default(now()) @db.Timestamptz(6)
+  payments               payments          @relation(fields: [payment_id], references: [id], onUpdate: NoAction, map: "fk_charging_session_payments_payment")
+  charging_sessions      charging_sessions @relation(fields: [charging_session_id], references: [id], onUpdate: NoAction, map: "fk_charging_session_payments_session")
+
+  @@index([charging_session_id, linked_at], map: "idx_charging_session_payments_session")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model charging_sessions {
+  id                          String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_reference           String                      @unique(map: "uq_charging_sessions_reference") @db.VarChar(80)
+  station_id                  String                      @db.Uuid
+  device_id                   String                      @db.Uuid
+  locker_id                   String                      @db.Uuid
+  charging_port_id            String                      @db.Uuid
+  status                      String                      @default("pending") @db.VarChar(25)
+  access_code_hash            String?
+  access_code_expires_at      DateTime?                   @db.Timestamptz(6)
+  access_code_failed_attempts Int                         @default(0) @db.SmallInt
+  access_code_locked_until    DateTime?                   @db.Timestamptz(6)
+  purchased_duration_seconds  Int                         @default(0)
+  remaining_seconds           Int                         @default(0)
+  total_paid_minor            BigInt                      @default(0)
+  currency                    String                      @default("TZS") @db.Char(3)
+  extension_count             Int                         @default(0) @db.SmallInt
+  power_source_at_start       String?                     @db.VarChar(20)
+  power_source_at_end         String?                     @db.VarChar(20)
+  started_at                  DateTime?                   @db.Timestamptz(6)
+  expected_end_at             DateTime?                   @db.Timestamptz(6)
+  last_progress_at            DateTime?                   @db.Timestamptz(6)
+  ended_at                    DateTime?                   @db.Timestamptz(6)
+  termination_reason          String?                     @db.VarChar(255)
+  metadata                    Json                        @default("{}")
+  created_at                  DateTime                    @default(now()) @db.Timestamptz(6)
+  updated_at                  DateTime                    @default(now()) @db.Timestamptz(6)
+  alerts                      alerts[]
+  charging_session_payments   charging_session_payments[]
+  devices                     devices                     @relation(fields: [device_id, station_id], references: [id, station_id], onUpdate: NoAction, map: "fk_charging_sessions_device_station")
+  lockers                     lockers                     @relation(fields: [locker_id, device_id], references: [id, device_id], onUpdate: NoAction, map: "fk_charging_sessions_locker_device")
+  charging_ports              charging_ports              @relation(fields: [charging_port_id, locker_id, device_id], references: [id, locker_id, device_id], onUpdate: NoAction, map: "fk_charging_sessions_port_hierarchy")
+
+  @@index([device_id, created_at(sort: Desc)], map: "idx_charging_sessions_device_created")
+  @@index([station_id, created_at(sort: Desc)], map: "idx_charging_sessions_station_created")
+  @@index([status, created_at(sort: Desc)], map: "idx_charging_sessions_status_created")
+  @@index([device_id, charging_port_id, created_at(sort: Desc)], map: "idx_sessions_device_port")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model coin_insertions {
+  id                    String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_id            String        @db.Uuid
+  device_id             String        @db.Uuid
+  device_event_id       String        @unique(map: "uq_coin_insertions_event") @db.Uuid
+  denomination_minor    BigInt
+  credited_amount_minor BigInt        @default(0)
+  currency              String        @default("TZS") @db.Char(3)
+  pulse_count           Int           @default(1) @db.SmallInt
+  accepted              Boolean
+  reject_reason         String?       @db.VarChar(120)
+  inserted_at           DateTime      @db.Timestamptz(6)
+  metadata              Json          @default("{}")
+  created_at            DateTime      @default(now()) @db.Timestamptz(6)
+  device_events         device_events @relation(fields: [device_event_id, device_id], references: [id, device_id], onUpdate: NoAction, map: "fk_coin_insertions_event_device")
+  payments              payments      @relation(fields: [payment_id, device_id], references: [id, device_id], onUpdate: NoAction, map: "fk_coin_insertions_payment_device")
+
+  @@index([device_id, inserted_at(sort: Desc)], map: "idx_coin_insertions_device_time")
+  @@index([payment_id, inserted_at], map: "idx_coin_insertions_payment")
+  @@unique([device_event_id, device_id], map: "prisma_uq_coin_insertions_event_device")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model device_commands {
+  id                       String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  station_id               String         @db.Uuid
+  device_id                String         @db.Uuid
+  command_type             String         @db.VarChar(80)
+  payload                  Json           @default("{}")
+  status                   String         @default("queued") @db.VarChar(20)
+  idempotency_key          String?        @unique(map: "uq_device_commands_idempotency") @db.VarChar(120)
+  requested_by_user_id     String?        @db.Uuid
+  requested_at             DateTime       @default(now()) @db.Timestamptz(6)
+  available_at             DateTime       @default(now()) @db.Timestamptz(6)
+  sent_at                  DateTime?      @db.Timestamptz(6)
+  acknowledged_at          DateTime?      @db.Timestamptz(6)
+  completed_at             DateTime?      @db.Timestamptz(6)
+  expires_at               DateTime?      @db.Timestamptz(6)
+  failure_code             String?        @db.VarChar(80)
+  failure_reason           String?
+  device_response          Json?
+  acknowledgement_event_id String?        @db.Uuid
+  device_events            device_events? @relation(fields: [acknowledgement_event_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_device_commands_ack_event")
+  devices                  devices        @relation(fields: [device_id, station_id], references: [id, station_id], onUpdate: NoAction, map: "fk_device_commands_device_station")
+  users                    users?         @relation(fields: [requested_by_user_id], references: [id], onUpdate: NoAction, map: "fk_device_commands_requested_by")
+
+  @@index([station_id, requested_at(sort: Desc)], map: "idx_device_commands_station")
+  @@index([status, requested_at(sort: Desc)], map: "idx_device_commands_status_requested")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model device_credentials {
+  id                                                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  device_id                                          String               @db.Uuid
+  key_id                                             String               @unique(map: "uq_device_credentials_key_id") @db.VarChar(100)
+  credential_type                                    String               @db.VarChar(30)
+  secret_hash                                        String?
+  secret_encrypted                                   String?
+  public_key_pem                                     String?
+  certificate_fingerprint                            String?              @db.VarChar(255)
+  status                                             String               @default("active") @db.VarChar(20)
+  valid_from                                         DateTime             @default(now()) @db.Timestamptz(6)
+  expires_at                                         DateTime?            @db.Timestamptz(6)
+  last_used_at                                       DateTime?            @db.Timestamptz(6)
+  revoked_at                                         DateTime?            @db.Timestamptz(6)
+  revoke_reason                                      String?              @db.VarChar(255)
+  rotated_from_credential_id                         String?              @db.Uuid
+  created_at                                         DateTime             @default(now()) @db.Timestamptz(6)
+  created_by_user_id                                 String?              @db.Uuid
+  revoked_by_user_id                                 String?              @db.Uuid
+  users_device_credentials_created_by_user_idTousers users?               @relation("device_credentials_created_by_user_idTousers", fields: [created_by_user_id], references: [id], onUpdate: NoAction, map: "fk_device_credentials_created_by")
+  devices                                            devices              @relation(fields: [device_id], references: [id], onUpdate: NoAction, map: "fk_device_credentials_device")
+  users_device_credentials_revoked_by_user_idTousers users?               @relation("device_credentials_revoked_by_user_idTousers", fields: [revoked_by_user_id], references: [id], onUpdate: NoAction, map: "fk_device_credentials_revoked_by")
+  device_credentials                                 device_credentials?  @relation("device_credentialsTodevice_credentials", fields: [rotated_from_credential_id], references: [id], onUpdate: NoAction, map: "fk_device_credentials_rotated_from")
+  other_device_credentials                           device_credentials[] @relation("device_credentialsTodevice_credentials")
+
+  @@index([device_id], map: "idx_device_credentials_device")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model device_events {
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  station_id        String            @db.Uuid
+  device_id         String            @db.Uuid
+  external_event_id String            @db.VarChar(120)
+  event_category    String            @db.VarChar(30)
+  event_type        String            @db.VarChar(80)
+  sequence_number   BigInt?
+  occurred_at       DateTime          @db.Timestamptz(6)
+  received_at       DateTime          @default(now()) @db.Timestamptz(6)
+  firmware_version  String?           @db.VarChar(50)
+  payload           Json              @default("{}")
+  payload_sha256    String?           @db.Char(64)
+  processing_status String            @default("received") @db.VarChar(20)
+  processed_at      DateTime?         @db.Timestamptz(6)
+  failure_code      String?           @db.VarChar(80)
+  failure_reason    String?
+  request_id        String?           @db.VarChar(100)
+  source_ip         String?           @db.Inet
+  alerts            alerts[]
+  coin_insertions   coin_insertions?
+  device_commands   device_commands[]
+  devices           devices           @relation(fields: [device_id, station_id], references: [id, station_id], onUpdate: NoAction, map: "fk_device_events_device_station")
+  device_telemetry  device_telemetry?
+
+  @@unique([device_id, external_event_id], map: "uq_device_events_device_external")
+  @@unique([id, device_id], map: "uq_device_events_id_device")
+  @@index([device_id, received_at(sort: Desc)], map: "idx_device_events_device_received")
+  @@index([processing_status, received_at], map: "idx_device_events_processing")
+  @@index([received_at], map: "idx_device_events_received_brin", type: Brin)
+  @@index([station_id, received_at(sort: Desc)], map: "idx_device_events_station_received")
+  @@index([event_type, received_at(sort: Desc)], map: "idx_device_events_type_received")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model device_telemetry {
+  id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  device_event_id         String        @unique(map: "uq_device_telemetry_event") @db.Uuid
+  station_id              String        @db.Uuid
+  device_id               String        @db.Uuid
+  observed_at             DateTime      @db.Timestamptz(6)
+  power_source            String        @default("unknown") @db.VarChar(20)
+  grid_available          Boolean?
+  input_voltage           Decimal?      @db.Decimal(8, 3)
+  output_voltage          Decimal?      @db.Decimal(8, 3)
+  output_current_ma       Int?
+  output_power_watts      Decimal?      @db.Decimal(9, 3)
+  battery_voltage         Decimal?      @db.Decimal(8, 3)
+  battery_percentage      Decimal?      @db.Decimal(5, 2)
+  temperature_celsius     Decimal?      @db.Decimal(6, 2)
+  connectivity_signal_dbm Int?
+  active_session_count    Int?          @db.SmallInt
+  available_locker_count  Int?          @db.SmallInt
+  fault_code              String?       @db.VarChar(80)
+  metrics                 Json          @default("{}")
+  created_at              DateTime      @default(now()) @db.Timestamptz(6)
+  devices                 devices       @relation(fields: [device_id, station_id], references: [id, station_id], onUpdate: NoAction, map: "fk_device_telemetry_device_station")
+  device_events           device_events @relation(fields: [device_event_id, device_id], references: [id, device_id], onUpdate: NoAction, map: "fk_device_telemetry_event_device")
+
+  @@index([device_id, observed_at(sort: Desc)], map: "idx_device_telemetry_device_observed")
+  @@index([observed_at], map: "idx_device_telemetry_observed_brin", type: Brin)
+  @@index([station_id, observed_at(sort: Desc)], map: "idx_device_telemetry_station_observed")
+  @@unique([device_event_id, device_id], map: "prisma_uq_device_telemetry_event_device")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model devices {
+  id                                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  station_id                          String               @db.Uuid
+  device_code                         String               @unique(map: "uq_devices_code") @db.VarChar(60)
+  serial_number                       String               @unique(map: "uq_devices_serial_number") @db.VarChar(100)
+  name                                String               @db.VarChar(120)
+  manufacturer                        String?              @db.VarChar(100)
+  model                               String?              @db.VarChar(100)
+  firmware_version                    String?              @db.VarChar(50)
+  hardware_version                    String?              @db.VarChar(50)
+  lifecycle_status                    String               @default("pending") @db.VarChar(20)
+  connectivity_status                 String               @default("unknown") @db.VarChar(20)
+  operational_status                  String               @default("idle") @db.VarChar(30)
+  current_power_source                String               @default("unknown") @db.VarChar(20)
+  expected_heartbeat_interval_seconds Int                  @default(60)
+  last_seen_at                        DateTime?            @db.Timestamptz(6)
+  last_ip_address                     String?              @db.Inet
+  activated_at                        DateTime?            @db.Timestamptz(6)
+  installed_at                        DateTime?            @db.Timestamptz(6)
+  maintenance_started_at              DateTime?            @db.Timestamptz(6)
+  decommissioned_at                   DateTime?            @db.Timestamptz(6)
+  metadata                            Json                 @default("{}")
+  created_at                          DateTime             @default(now()) @db.Timestamptz(6)
+  updated_at                          DateTime             @default(now()) @db.Timestamptz(6)
+  created_by_user_id                  String?              @db.Uuid
+  alerts                              alerts[]
+  audit_logs                          audit_logs[]
+  charging_ports                      charging_ports[]
+  charging_sessions                   charging_sessions[]
+  device_commands                     device_commands[]
+  device_credentials                  device_credentials[]
+  device_events                       device_events[]
+  device_telemetry                    device_telemetry[]
+  users                               users?               @relation(fields: [created_by_user_id], references: [id], onUpdate: NoAction, map: "fk_devices_created_by")
+  stations                            stations             @relation(fields: [station_id], references: [id], onUpdate: NoAction, map: "fk_devices_station")
+  lockers                             lockers[]
+  payments                            payments[]
+  system_settings                     system_settings[]
+
+  @@unique([id, station_id], map: "uq_devices_id_station")
+  @@index([connectivity_status], map: "idx_devices_connectivity")
+  @@index([last_seen_at], map: "idx_devices_last_seen")
+  @@index([lifecycle_status], map: "idx_devices_lifecycle")
+  @@index([operational_status], map: "idx_devices_operational")
+  @@index([station_id], map: "idx_devices_station")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model lockers {
+  id                     String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  device_id              String              @db.Uuid
+  locker_number          Int                 @db.SmallInt
+  label                  String?             @db.VarChar(50)
+  availability_status    String              @default("available") @db.VarChar(20)
+  door_status            String              @default("unknown") @db.VarChar(20)
+  lock_status            String              @default("unknown") @db.VarChar(20)
+  sensor_status          String              @default("unknown") @db.VarChar(20)
+  last_status_changed_at DateTime?           @db.Timestamptz(6)
+  last_seen_at           DateTime?           @db.Timestamptz(6)
+  maintenance_reason     String?
+  created_at             DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime            @default(now()) @db.Timestamptz(6)
+  alerts                 alerts[]
+  charging_ports         charging_ports[]
+  charging_sessions      charging_sessions[]
+  devices                devices             @relation(fields: [device_id], references: [id], onUpdate: NoAction, map: "fk_lockers_device")
+
+  @@unique([device_id, locker_number], map: "uq_lockers_device_number")
+  @@unique([id, device_id], map: "uq_lockers_id_device")
+  @@index([availability_status], map: "idx_lockers_availability")
+  @@index([device_id], map: "idx_lockers_device")
+  @@index([device_id, availability_status], map: "idx_lockers_device_availability")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model payments {
+  id                                String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_reference                 String                     @unique(map: "uq_payments_reference") @db.VarChar(80)
+  station_id                        String                     @db.Uuid
+  device_id                         String                     @db.Uuid
+  charging_package_id               String                     @db.Uuid
+  payment_method                    String                     @db.VarChar(20)
+  source                            String                     @default("device") @db.VarChar(20)
+  status                            String                     @default("pending") @db.VarChar(20)
+  expected_amount_minor             BigInt
+  received_amount_minor             BigInt                     @default(0)
+  currency                          String                     @default("TZS") @db.Char(3)
+  package_name_snapshot             String                     @db.VarChar(100)
+  package_duration_seconds_snapshot Int
+  idempotency_key                   String?                    @unique(map: "uq_payments_idempotency") @db.VarChar(120)
+  initiated_at                      DateTime                   @default(now()) @db.Timestamptz(6)
+  confirmed_at                      DateTime?                  @db.Timestamptz(6)
+  failed_at                         DateTime?                  @db.Timestamptz(6)
+  expired_at                        DateTime?                  @db.Timestamptz(6)
+  cancelled_at                      DateTime?                  @db.Timestamptz(6)
+  refunded_at                       DateTime?                  @db.Timestamptz(6)
+  failure_code                      String?                    @db.VarChar(80)
+  failure_reason                    String?
+  metadata                          Json                       @default("{}")
+  created_at                        DateTime                   @default(now()) @db.Timestamptz(6)
+  updated_at                        DateTime                   @default(now()) @db.Timestamptz(6)
+  charging_session_payments         charging_session_payments?
+  coin_insertions                   coin_insertions[]
+  devices                           devices                    @relation(fields: [device_id, station_id], references: [id, station_id], onUpdate: NoAction, map: "fk_payments_device_station")
+  charging_packages                 charging_packages          @relation(fields: [charging_package_id], references: [id], onUpdate: NoAction, map: "fk_payments_package")
+  qr_payment_transactions           qr_payment_transactions?
+
+  @@unique([id, device_id], map: "uq_payments_id_device")
+  @@unique([id, device_id, station_id], map: "uq_payments_id_hierarchy")
+  @@index([device_id, initiated_at(sort: Desc)], map: "idx_payments_device_initiated")
+  @@index([payment_method, initiated_at(sort: Desc)], map: "idx_payments_method_initiated")
+  @@index([station_id, initiated_at(sort: Desc)], map: "idx_payments_station_initiated")
+  @@index([status, initiated_at(sort: Desc)], map: "idx_payments_status_initiated")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model permissions {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code             String             @unique(map: "uq_permissions_code") @db.VarChar(100)
+  module           String             @db.VarChar(60)
+  action           String             @db.VarChar(60)
+  description      String?
+  created_at       DateTime           @default(now()) @db.Timestamptz(6)
+  role_permissions role_permissions[]
+
+  @@unique([module, action], map: "uq_permissions_module_action")
+  @@index([module], map: "idx_permissions_module")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model qr_payment_transactions {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  payment_id              String    @unique(map: "uq_qr_payment_transactions_payment") @db.Uuid
+  provider                String    @db.VarChar(50)
+  merchant_reference      String    @db.VarChar(120)
+  provider_transaction_id String?   @db.VarChar(150)
+  qr_reference            String?   @db.VarChar(180)
+  provider_status         String    @default("created") @db.VarChar(40)
+  amount_minor            BigInt
+  currency                String    @default("TZS") @db.Char(3)
+  requested_at            DateTime  @default(now()) @db.Timestamptz(6)
+  qr_expires_at           DateTime? @db.Timestamptz(6)
+  callback_received_at    DateTime? @db.Timestamptz(6)
+  confirmed_at            DateTime? @db.Timestamptz(6)
+  failed_at               DateTime? @db.Timestamptz(6)
+  failure_code            String?   @db.VarChar(80)
+  failure_reason          String?
+  raw_response            Json?
+  created_at              DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime  @default(now()) @db.Timestamptz(6)
+  payments                payments  @relation(fields: [payment_id], references: [id], onUpdate: NoAction, map: "fk_qr_payment_transactions_payment")
+
+  @@unique([provider, merchant_reference], map: "uq_qr_payment_transactions_merchant")
+  @@index([provider_status, requested_at(sort: Desc)], map: "idx_qr_payment_transactions_status")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model role_permissions {
+  role_id            String      @db.Uuid
+  permission_id      String      @db.Uuid
+  granted_at         DateTime    @default(now()) @db.Timestamptz(6)
+  granted_by_user_id String?     @db.Uuid
+  users              users?      @relation(fields: [granted_by_user_id], references: [id], onUpdate: NoAction, map: "fk_role_permissions_granted_by")
+  permissions        permissions @relation(fields: [permission_id], references: [id], onUpdate: NoAction, map: "fk_role_permissions_permission")
+  roles              roles       @relation(fields: [role_id], references: [id], onUpdate: NoAction, map: "fk_role_permissions_role")
+
+  @@id([role_id, permission_id], map: "pk_role_permissions")
+  @@index([permission_id], map: "idx_role_permissions_permission")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model roles {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                  String                  @unique(map: "uq_roles_code") @db.VarChar(60)
+  name                  String                  @db.VarChar(100)
+  description           String?
+  is_system_role        Boolean                 @default(false)
+  status                String                  @default("active") @db.VarChar(20)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime                @default(now()) @db.Timestamptz(6)
+  role_permissions      role_permissions[]
+  user_role_assignments user_role_assignments[]
+
+  @@index([status], map: "idx_roles_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model stations {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                  String                  @unique(map: "uq_stations_code") @db.VarChar(40)
+  name                  String                  @db.VarChar(150)
+  station_type          String                  @db.VarChar(30)
+  description           String?
+  region                String                  @db.VarChar(100)
+  district              String?                 @db.VarChar(100)
+  ward                  String?                 @db.VarChar(100)
+  address               String?
+  latitude              Decimal?                @db.Decimal(9, 6)
+  longitude             Decimal?                @db.Decimal(9, 6)
+  timezone              String                  @default("Africa/Dar_es_Salaam") @db.VarChar(50)
+  status                String                  @default("active") @db.VarChar(20)
+  installed_at          DateTime?               @db.Timestamptz(6)
+  created_at            DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime                @default(now()) @db.Timestamptz(6)
+  created_by_user_id    String?                 @db.Uuid
+  alerts                alerts[]
+  audit_logs            audit_logs[]
+  charging_packages     charging_packages[]
+  devices               devices[]
+  users                 users?                  @relation(fields: [created_by_user_id], references: [id], onUpdate: NoAction, map: "fk_stations_created_by")
+  system_settings       system_settings[]
+  user_role_assignments user_role_assignments[]
+
+  @@index([region], map: "idx_stations_region")
+  @@index([status], map: "idx_stations_status")
+  @@index([station_type], map: "idx_stations_type")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model system_settings {
+  id                                              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  setting_key                                     String    @db.VarChar(100)
+  scope_type                                      String    @db.VarChar(20)
+  station_id                                      String?   @db.Uuid
+  device_id                                       String?   @db.Uuid
+  value_type                                      String    @db.VarChar(20)
+  value_json                                      Json
+  status                                          String    @default("active") @db.VarChar(20)
+  version                                         Int       @default(1)
+  description                                     String?
+  created_at                                      DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                                      DateTime  @default(now()) @db.Timestamptz(6)
+  created_by_user_id                              String?   @db.Uuid
+  updated_by_user_id                              String?   @db.Uuid
+  users_system_settings_created_by_user_idTousers users?    @relation("system_settings_created_by_user_idTousers", fields: [created_by_user_id], references: [id], onUpdate: NoAction, map: "fk_system_settings_created_by")
+  devices                                         devices?  @relation(fields: [device_id, station_id], references: [id, station_id], onDelete: Restrict, onUpdate: NoAction, map: "fk_system_settings_device_station")
+  stations                                        stations? @relation(fields: [station_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_system_settings_station")
+  users_system_settings_updated_by_user_idTousers users?    @relation("system_settings_updated_by_user_idTousers", fields: [updated_by_user_id], references: [id], onUpdate: NoAction, map: "fk_system_settings_updated_by")
+
+  @@index([scope_type, status], map: "idx_system_settings_scope_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model user_role_assignments {
+  id                                                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                                                String    @db.Uuid
+  role_id                                                String    @db.Uuid
+  station_id                                             String?   @db.Uuid
+  assigned_by_user_id                                    String?   @db.Uuid
+  assigned_at                                            DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at                                             DateTime? @db.Timestamptz(6)
+  revoked_at                                             DateTime? @db.Timestamptz(6)
+  revoked_by_user_id                                     String?   @db.Uuid
+  revocation_reason                                      String?   @db.VarChar(255)
+  users_user_role_assignments_assigned_by_user_idTousers users?    @relation("user_role_assignments_assigned_by_user_idTousers", fields: [assigned_by_user_id], references: [id], onUpdate: NoAction, map: "fk_user_role_assignments_assigned_by")
+  users_user_role_assignments_revoked_by_user_idTousers  users?    @relation("user_role_assignments_revoked_by_user_idTousers", fields: [revoked_by_user_id], references: [id], onUpdate: NoAction, map: "fk_user_role_assignments_revoked_by")
+  roles                                                  roles     @relation(fields: [role_id], references: [id], onUpdate: NoAction, map: "fk_user_role_assignments_role")
+  stations                                               stations? @relation(fields: [station_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "fk_user_role_assignments_station")
+  users_user_role_assignments_user_idTousers             users     @relation("user_role_assignments_user_idTousers", fields: [user_id], references: [id], onUpdate: NoAction, map: "fk_user_role_assignments_user")
+
+  @@index([user_id], map: "idx_user_role_assignments_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                                                                     String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  full_name                                                              String                  @db.VarChar(150)
+  email                                                                  String                  @unique(map: "uq_users_email") @db.Citext
+  phone_number                                                           String?                 @db.VarChar(30)
+  password_hash                                                          String
+  status                                                                 String                  @default("active") @db.VarChar(20)
+  must_change_password                                                   Boolean                 @default(false)
+  last_login_at                                                          DateTime?               @db.Timestamptz(6)
+  failed_login_attempts                                                  Int                     @default(0) @db.SmallInt
+  locked_until                                                           DateTime?               @db.Timestamptz(6)
+  created_at                                                             DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at                                                             DateTime                @default(now()) @db.Timestamptz(6)
+  created_by_user_id                                                     String?                 @db.Uuid
+  alerts_alerts_acknowledged_by_user_idTousers                           alerts[]                @relation("alerts_acknowledged_by_user_idTousers")
+  alerts_alerts_resolved_by_user_idTousers                               alerts[]                @relation("alerts_resolved_by_user_idTousers")
+  audit_logs                                                             audit_logs[]
+  auth_sessions                                                          auth_sessions[]
+  charging_packages                                                      charging_packages[]
+  device_commands                                                        device_commands[]
+  device_credentials_device_credentials_created_by_user_idTousers        device_credentials[]    @relation("device_credentials_created_by_user_idTousers")
+  device_credentials_device_credentials_revoked_by_user_idTousers        device_credentials[]    @relation("device_credentials_revoked_by_user_idTousers")
+  devices                                                                devices[]
+  role_permissions                                                       role_permissions[]
+  stations                                                               stations[]
+  system_settings_system_settings_created_by_user_idTousers              system_settings[]       @relation("system_settings_created_by_user_idTousers")
+  system_settings_system_settings_updated_by_user_idTousers              system_settings[]       @relation("system_settings_updated_by_user_idTousers")
+  user_role_assignments_user_role_assignments_assigned_by_user_idTousers user_role_assignments[] @relation("user_role_assignments_assigned_by_user_idTousers")
+  user_role_assignments_user_role_assignments_revoked_by_user_idTousers  user_role_assignments[] @relation("user_role_assignments_revoked_by_user_idTousers")
+  user_role_assignments_user_role_assignments_user_idTousers             user_role_assignments[] @relation("user_role_assignments_user_idTousers")
+  users                                                                  users?                  @relation("usersTousers", fields: [created_by_user_id], references: [id], onUpdate: NoAction, map: "fk_users_created_by")
+  other_users                                                            users[]                 @relation("usersTousers")
+
+  @@index([created_at], map: "idx_users_created_at")
+  @@index([status], map: "idx_users_status")
+}
