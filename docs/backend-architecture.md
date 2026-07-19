@@ -16,7 +16,7 @@ because they split one feature across the project.
 - `src/common`: shared API contracts, constants, filters, interceptors, DTOs,
   types, and small utilities that are not owned by one feature.
 - `src/config`: all process environment access and validation.
-- `src/modules`: feature modules and their owned files.
+- `src/apps`: feature modules and their owned files.
 - `test`: end-to-end test configuration and e2e specs.
 - `docs`: architecture and integration documentation.
 
@@ -142,7 +142,7 @@ Shared paginated responses use:
 
 ## Adding A Module
 
-Create a folder under `src/modules/<feature>`. Add the module, controller,
+Create a folder under `src/apps/<feature>`. Add the module, controller,
 service, DTOs, types, and tests only when they have real content. Register the
 module in `AppModule` after its boundary is clear.
 
