@@ -17,6 +17,7 @@ import { PermissionsGuard } from '../access-control/guards/permissions.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import { CommandPollingService } from '../device-commands/services/command-polling.service';
 import { DeviceAuthGuard } from './auth/device-auth.guard';
 import { CreateDeviceEventDto } from './dto/create-device-event.dto';
 import { DeviceEventQueryDto } from './dto/device-event-query.dto';
@@ -33,6 +34,7 @@ export class DeviceIngestionController {
     private readonly events: DeviceEventService,
     private readonly eventReads: DeviceEventReadService,
     private readonly telemetryReads: DeviceTelemetryReadService,
+    private readonly commandPolling: CommandPollingService,
   ) {}
 
   @Post('device-ingestion/events')
@@ -44,6 +46,12 @@ export class DeviceIngestionController {
       requestId: req.requestId,
       sourceIp: req.ip,
     });
+  }
+
+  @Get('device-ingestion/commands')
+  @UseGuards(DeviceAuthGuard)
+  pollCommands(@Req() req: DeviceAuthRequest) {
+    return this.commandPolling.poll(req.deviceAuth!);
   }
 
   @Get('device-events')

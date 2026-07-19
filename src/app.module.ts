@@ -6,6 +6,7 @@ import { AuthModule } from './apps/auth/auth.module';
 import { AccessControlModule } from './apps/access-control/access-control.module';
 import { ChargingPortsModule } from './apps/charging-ports/charging-ports.module';
 import { ChargingSessionsModule } from './apps/charging-sessions/charging-sessions.module';
+import { DeviceCommandsModule } from './apps/device-commands/device-commands.module';
 import { DeviceCredentialsModule } from './apps/device-credentials/device-credentials.module';
 import { DeviceIngestionModule } from './apps/device-ingestion/device-ingestion.module';
 import { DevicesModule } from './apps/devices/devices.module';
@@ -29,6 +30,7 @@ import { PrismaModule } from './database/prisma.module';
     UsersModule,
     StationsModule,
     DevicesModule,
+    DeviceCommandsModule,
     DeviceCredentialsModule,
     DeviceIngestionModule,
     ChargingPortsModule,

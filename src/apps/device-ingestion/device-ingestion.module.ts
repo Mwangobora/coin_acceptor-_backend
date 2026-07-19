@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 
 import { AccessControlModule } from '../access-control/access-control.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { DeviceCommandsModule } from '../device-commands/device-commands.module';
 import { DeviceSecretEncryptionService } from '../device-credentials/services/device-secret-encryption.service';
 import { PrismaModule } from '../../database/prisma.module';
 import { DeviceAuthGuard } from './auth/device-auth.guard';
 import { DeviceIngestionController } from './device-ingestion.controller';
 import { ChargingPortEventHandler } from './handlers/charging-port-event.handler';
+import { CommandAckEventHandler } from './handlers/command-ack-event.handler';
 import { HeartbeatEventHandler } from './handlers/heartbeat-event.handler';
 import { LockerEventHandler } from './handlers/locker-event.handler';
 import { TelemetryEventHandler } from './handlers/telemetry-event.handler';
@@ -23,7 +25,12 @@ import { PayloadHashService } from './services/payload-hash.service';
 import { SensitivePayloadService } from './services/sensitive-payload.service';
 
 @Module({
-  imports: [PrismaModule, AuditLogsModule, AccessControlModule],
+  imports: [
+    PrismaModule,
+    AuditLogsModule,
+    AccessControlModule,
+    DeviceCommandsModule,
+  ],
   controllers: [DeviceIngestionController],
   providers: [
     DeviceAuthGuard,
@@ -43,6 +50,7 @@ import { SensitivePayloadService } from './services/sensitive-payload.service';
     TelemetryEventHandler,
     LockerEventHandler,
     ChargingPortEventHandler,
+    CommandAckEventHandler,
   ],
 })
 export class DeviceIngestionModule {}

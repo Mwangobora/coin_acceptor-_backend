@@ -23,6 +23,8 @@ export async function createTestApp(): Promise<{
     '0123456789abcdef0123456789abcdef';
   process.env.DEVICE_HMAC_CLOCK_SKEW_SECONDS = '300';
   process.env.DEVICE_EVENT_MAX_FUTURE_SECONDS = '300';
+  process.env.DEVICE_COMMAND_POLL_LIMIT = '10';
+  process.env.DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS = '60';
   process.env.JWT_ACCESS_SECRET = 'test-access-secret';
   process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
   process.env.JWT_ACCESS_TTL = '7d';

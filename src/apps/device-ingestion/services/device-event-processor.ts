@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Prisma, device_events } from '@prisma/client';
 
 import { ChargingPortEventHandler } from '../handlers/charging-port-event.handler';
+import { CommandAckEventHandler } from '../handlers/command-ack-event.handler';
 import { HeartbeatEventHandler } from '../handlers/heartbeat-event.handler';
 import { LockerEventHandler } from '../handlers/locker-event.handler';
 import { TelemetryEventHandler } from '../handlers/telemetry-event.handler';
@@ -16,8 +17,9 @@ export class DeviceEventProcessor {
     telemetry: TelemetryEventHandler,
     locker: LockerEventHandler,
     chargingPort: ChargingPortEventHandler,
+    commandAck: CommandAckEventHandler,
   ) {
-    this.handlers = [heartbeat, telemetry, locker, chargingPort];
+    this.handlers = [heartbeat, telemetry, locker, chargingPort, commandAck];
   }
 
   async process(event: device_events): Promise<'processed' | 'received'> {

@@ -14,6 +14,10 @@ export const securityConfig = registerAs('security', () => ({
   deviceEventMaxFutureSeconds: Number(
     process.env.DEVICE_EVENT_MAX_FUTURE_SECONDS ?? 300,
   ),
+  deviceCommandPollLimit: Number(process.env.DEVICE_COMMAND_POLL_LIMIT ?? 10),
+  deviceCommandExpiryIntervalSeconds: Number(
+    process.env.DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS ?? 60,
+  ),
   redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,

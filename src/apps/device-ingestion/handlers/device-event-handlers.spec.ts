@@ -2,6 +2,7 @@ import { HeartbeatEventHandler } from './heartbeat-event.handler';
 import { TelemetryEventHandler } from './telemetry-event.handler';
 import { LockerEventHandler } from './locker-event.handler';
 import { ChargingPortEventHandler } from './charging-port-event.handler';
+import { CommandAckEventHandler } from './command-ack-event.handler';
 
 describe('device event handlers', () => {
   it('updates heartbeat device state', async () => {
@@ -45,6 +46,15 @@ describe('device event handlers', () => {
     >;
     const portCall = updatePort.mock.calls[0]?.[0];
     expect(portCall.data.power_state).toBe('on');
+  });
+
+  it('delegates command acknowledgements', async () => {
+    const commands = { acknowledge: jest.fn() };
+    const handler = new CommandAckEventHandler(commands as never);
+    expect(handler.canHandle('command_ack')).toBe(true);
+    expect(handler.canHandle('heartbeat')).toBe(false);
+    await handler.handle(context({}, 'command_ack', 'device.command_ack'));
+    expect(commands.acknowledge).toHaveBeenCalled();
   });
 });
 

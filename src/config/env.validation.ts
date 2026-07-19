@@ -17,6 +17,8 @@ export type EnvironmentVariables = {
   DEVICE_CREDENTIAL_ENCRYPTION_KEY: string;
   DEVICE_HMAC_CLOCK_SKEW_SECONDS: number;
   DEVICE_EVENT_MAX_FUTURE_SECONDS: number;
+  DEVICE_COMMAND_POLL_LIMIT: number;
+  DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS: number;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL: string;
@@ -161,6 +163,16 @@ export function validateEnv(config: Record<string, unknown>) {
       config.DEVICE_EVENT_MAX_FUTURE_SECONDS,
       'DEVICE_EVENT_MAX_FUTURE_SECONDS',
       300,
+    ),
+    DEVICE_COMMAND_POLL_LIMIT: parsePositiveInt(
+      config.DEVICE_COMMAND_POLL_LIMIT,
+      'DEVICE_COMMAND_POLL_LIMIT',
+      10,
+    ),
+    DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS: parsePositiveInt(
+      config.DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS,
+      'DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS',
+      60,
     ),
     JWT_ACCESS_SECRET: optionalString(
       config,

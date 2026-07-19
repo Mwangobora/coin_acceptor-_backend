@@ -14,6 +14,7 @@ const config: Config = {
     'src/apps/audit-logs/**/*.ts',
     'src/apps/stations/**/*.ts',
     'src/apps/devices/**/*.ts',
+    'src/apps/device-commands/**/*.ts',
     'src/apps/device-credentials/**/*.ts',
     'src/apps/device-ingestion/**/*.ts',
     'src/apps/lockers/**/*.ts',
