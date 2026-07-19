@@ -1,0 +1,44 @@
+name: coin_acceptor_backend
+
+services:
+  backend:
+    container_name: coin_acceptor_backend
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      API_PREFIX: api/v1
+      FRONTEND_URL: http://localhost:3000
+      DATABASE_URL: postgresql://postgres:postgres@database:5432/charging_system
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - .:/app
+      - backend_node_modules:/app/node_modules
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    container_name: coin_acceptor_backend_database
+    image: postgres:16-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-charging_system}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  backend_node_modules:
