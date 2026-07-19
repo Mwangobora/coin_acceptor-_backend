@@ -17,6 +17,7 @@ const config: Config = {
     'src/apps/device-commands/**/*.ts',
     'src/apps/device-credentials/**/*.ts',
     'src/apps/device-ingestion/**/*.ts',
+    'src/apps/payments/**/*.ts',
     'src/apps/lockers/**/*.ts',
     'src/apps/charging-ports/**/*.ts',
     '!src/apps/**/*.module.ts',

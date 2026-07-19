@@ -4,7 +4,9 @@ import { AccessControlModule } from '../access-control/access-control.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { DeviceCommandsModule } from '../device-commands/device-commands.module';
 import { DeviceSecretEncryptionService } from '../device-credentials/services/device-secret-encryption.service';
+import { PaymentsModule } from '../payments/payments.module';
 import { PrismaModule } from '../../database/prisma.module';
+import { DevicePaymentsController } from './controllers/device-payments.controller';
 import { DeviceAuthGuard } from './auth/device-auth.guard';
 import { DeviceIngestionController } from './device-ingestion.controller';
 import { ChargingPortEventHandler } from './handlers/charging-port-event.handler';
@@ -30,8 +32,9 @@ import { SensitivePayloadService } from './services/sensitive-payload.service';
     AuditLogsModule,
     AccessControlModule,
     DeviceCommandsModule,
+    PaymentsModule,
   ],
-  controllers: [DeviceIngestionController],
+  controllers: [DeviceIngestionController, DevicePaymentsController],
   providers: [
     DeviceAuthGuard,
     DeviceAuthService,

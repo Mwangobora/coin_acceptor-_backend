@@ -25,7 +25,7 @@ async function session(index: number) {
     charging_port_id: ids.ports[index],
     status: 'pending',
     access_code_hash: await hashSecret(`demo-locker-code-${index + 1}`),
-    access_code_expires_at: new Date('2026-07-19T12:30:00.000Z'),
+    access_code_expires_at: new Date('2035-07-19T12:30:00.000Z'),
     metadata: { seed: 'demo' },
   };
 }

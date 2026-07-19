@@ -78,5 +78,6 @@ function allowsDeferredStationScope(code: string): boolean {
     'lockers.configure',
     'charging_ports.read',
     'charging_ports.configure',
+    'payments.refund',
   ].includes(code);
 }

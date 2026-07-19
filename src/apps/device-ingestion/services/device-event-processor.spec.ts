@@ -12,6 +12,7 @@ describe('DeviceEventProcessor', () => {
       { canHandle: jest.fn() } as never,
       { canHandle: jest.fn() } as never,
       { canHandle: jest.fn() } as never,
+      { canHandle: jest.fn() } as never,
     );
 
     await expect(processor.process(event('heartbeat'))).resolves.toBe(

@@ -44,9 +44,11 @@ function events() {
   return [
     event(0, 'DEMO-EVENT-GRID-001', 'telemetry', 'telemetry.grid_power'),
     event(1, 'DEMO-EVENT-BATTERY-001', 'telemetry', 'telemetry.backup_battery'),
-    event(2, 'DEMO-EVENT-COIN-001', 'payment', 'payment.coin_accepted'),
+    event(2, 'DEMO-EVENT-COIN-001', 'payment', 'payment.coin_inserted'),
     event(3, 'DEMO-EVENT-QR-001', 'payment', 'payment.qr_confirmed'),
     event(4, 'DEMO-EVENT-ALERT-001', 'alert', 'alert.overcurrent_detected'),
+    event(5, 'DEMO-EVENT-COIN-002', 'payment', 'payment.coin_inserted'),
+    event(6, 'DEMO-EVENT-COIN-003', 'payment', 'payment.coin_inserted'),
   ];
 }
 

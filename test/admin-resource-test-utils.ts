@@ -33,6 +33,25 @@ export function deviceRecord(
   });
 }
 
+export function packageRecord(
+  prisma: PrismaClient,
+  stationId: string,
+  code: string,
+  priceMinor = 500,
+) {
+  return prisma.charging_packages.create({
+    data: {
+      station_id: stationId,
+      code,
+      name: code,
+      duration_seconds: 900,
+      price_minor: priceMinor,
+      allow_coin: true,
+      allow_qr: true,
+    },
+  });
+}
+
 export function lockerRecord(
   prisma: PrismaClient,
   deviceId: string,

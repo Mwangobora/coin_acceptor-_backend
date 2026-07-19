@@ -24,6 +24,11 @@ export function settings() {
       'integer',
       60,
     ),
+    setting(3, 'payments.coin_pulse_mapping', 'global', null, null, 'json', {
+      '1': 200,
+      '2': 300,
+      '5': 500,
+    }),
   ];
 }
 

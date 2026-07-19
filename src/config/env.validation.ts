@@ -1,3 +1,5 @@
+import { parsePaymentEnv } from './payment-env.validation';
+
 type Environment = 'development' | 'test' | 'production';
 
 export type EnvironmentVariables = {
@@ -19,6 +21,11 @@ export type EnvironmentVariables = {
   DEVICE_EVENT_MAX_FUTURE_SECONDS: number;
   DEVICE_COMMAND_POLL_LIMIT: number;
   DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS: number;
+  QR_PAYMENT_PROVIDER: string;
+  QR_MOCK_WEBHOOK_SECRET: string;
+  QR_PAYMENT_EXPIRY_SECONDS: number;
+  PAYMENT_PENDING_WINDOW_SECONDS: number;
+  COIN_PULSE_MAPPING_JSON: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL: string;
@@ -103,13 +110,10 @@ function parseSameSite(value: unknown) {
 function parseEncryptionKey(config: Record<string, unknown>, nodeEnv: string) {
   const fallback =
     nodeEnv === 'production' ? undefined : '0123456789abcdef0123456789abcdef';
-  const value = optionalString(
-    config,
-    'DEVICE_CREDENTIAL_ENCRYPTION_KEY',
-    fallback ?? '',
-  );
+  const key = 'DEVICE_CREDENTIAL_ENCRYPTION_KEY';
+  const value = optionalString(config, key, fallback ?? '');
   if (value.length !== 32) {
-    throw new Error('DEVICE_CREDENTIAL_ENCRYPTION_KEY must be 32 characters.');
+    throw new Error(`${key} must be 32 characters.`);
   }
   return value;
 }
@@ -174,6 +178,7 @@ export function validateEnv(config: Record<string, unknown>) {
       'DEVICE_COMMAND_EXPIRY_INTERVAL_SECONDS',
       60,
     ),
+    ...parsePaymentEnv(config, nodeEnv),
     JWT_ACCESS_SECRET: optionalString(
       config,
       'JWT_ACCESS_SECRET',

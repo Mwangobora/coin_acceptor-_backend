@@ -33,6 +33,7 @@ export const permissionCodes = [
   'charging_ports.read',
   'charging_ports.configure',
   'payments.read',
+  'payments.refund',
   'charging_sessions.read',
   'alerts.read',
   'alerts.acknowledge',

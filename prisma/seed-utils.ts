@@ -43,11 +43,15 @@ export async function insertRow(
 ): Promise<number> {
   const columns = Object.keys(row);
   const values = columns.map((column) => valueSql(column, row[column]));
+  const conflictClause =
+    conflictTarget.length > 0
+      ? Prisma.sql`on conflict (${Prisma.raw(conflictTarget)}) do nothing`
+      : Prisma.sql`on conflict do nothing`;
   const result = await prisma.$executeRaw(Prisma.sql`
     insert into charging_system.${Prisma.raw(table)}
     (${Prisma.join(columns.map((column) => Prisma.raw(column)))})
     values (${Prisma.join(values)})
-    on conflict (${Prisma.raw(conflictTarget)}) do nothing;
+    ${conflictClause};
   `);
 
   return Number(result);

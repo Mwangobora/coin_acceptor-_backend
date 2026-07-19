@@ -47,14 +47,16 @@ docker compose down -v
 
 ## Architecture
 
-The backend uses a feature-first modular monolith. Current real modules are
-`health` and `device-ingestion`; planned modules are documented in
-`docs/backend-architecture.md`.
+The backend uses a feature-first modular monolith. The active modules include
+health, auth, users, stations, devices, device ingestion, device commands,
+device credentials, lockers, charging ports, payments, audit logs, and
+settings. Module boundaries are documented in `docs/backend-architecture.md`.
 
 Device communication decisions that still need embedded-team confirmation are
 documented in `docs/device-integration-contract.md`.
 
 Database setup and seed commands are documented in `docs/database.md`.
+Coin and QR payment APIs are documented in `docs/payments.md`.
 
 ## Validation
 
