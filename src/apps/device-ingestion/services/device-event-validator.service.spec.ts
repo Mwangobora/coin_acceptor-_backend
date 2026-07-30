@@ -2,13 +2,17 @@ import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { DeviceEventValidatorService } from './device-event-validator.service';
+import { HardwareEventContractValidator } from './hardware-event-contract.validator';
 import { SensitivePayloadService } from './sensitive-payload.service';
 
 describe('DeviceEventValidatorService', () => {
   const sensitive: Pick<SensitivePayloadService, 'assertSafe'> = {
     assertSafe: jest.fn(),
   };
-  const service = new DeviceEventValidatorService(sensitive, {
+  const hardware: Pick<HardwareEventContractValidator, 'validate'> = {
+    validate: jest.fn(),
+  };
+  const service = new DeviceEventValidatorService(sensitive, hardware, {
     getOrThrow: jest.fn().mockReturnValue(300),
   } as unknown as ConfigService);
 
@@ -20,6 +24,7 @@ describe('DeviceEventValidatorService', () => {
       new Date(occurredAt),
     );
     expect(sensitive.assertSafe).toHaveBeenCalledWith({});
+    expect(hardware.validate).toHaveBeenCalled();
   });
 
   it('rejects invalid time and payload shapes', () => {

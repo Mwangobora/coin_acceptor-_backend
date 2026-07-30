@@ -14,6 +14,7 @@ describe('CommandPayloadValidatorRegistry', () => {
     const registry = new CommandPayloadValidatorRegistry(
       prisma as never,
       new CommandPayloadSanitizerService(),
+      { validate: jest.fn() },
     );
     await expect(
       registry.validate({
@@ -35,6 +36,7 @@ describe('CommandPayloadValidatorRegistry', () => {
     const registry = new CommandPayloadValidatorRegistry(
       { lockers: { findFirst: jest.fn() } } as never,
       new CommandPayloadSanitizerService(),
+      { validate: jest.fn() },
     );
     await expect(
       registry.validate({

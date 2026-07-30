@@ -57,6 +57,30 @@ export async function insertRow(
   return Number(result);
 }
 
+export async function upsertRow(
+  prisma: PrismaClient,
+  table: string,
+  row: SeedRow,
+  conflictTarget = 'id',
+): Promise<number> {
+  const columns = Object.keys(row);
+  const values = columns.map((column) => valueSql(column, row[column]));
+  const updates = columns
+    .filter((column) => column !== 'id')
+    .map(
+      (column) =>
+        Prisma.sql`${Prisma.raw(column)} = EXCLUDED.${Prisma.raw(column)}`,
+    );
+  const result = await prisma.$executeRaw(Prisma.sql`
+    insert into charging_system.${Prisma.raw(table)}
+    (${Prisma.join(columns.map((column) => Prisma.raw(column)))})
+    values (${Prisma.join(values)})
+    on conflict (${Prisma.raw(conflictTarget)}) do update
+    set ${Prisma.join(updates, ', ')};
+  `);
+  return Number(result);
+}
+
 function valueSql(column: string, value: SeedRow[string]): Prisma.Sql {
   if (column === 'value_json') {
     return Prisma.sql`${JSON.stringify(value)}::jsonb`;

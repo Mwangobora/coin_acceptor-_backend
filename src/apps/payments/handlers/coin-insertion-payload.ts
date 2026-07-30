@@ -14,10 +14,12 @@ export function parseCoinPayload(payload: Prisma.JsonObject): CoinPayload {
   if (!paymentReference || !Number.isInteger(pulseCount) || pulseCount < 1) {
     throw new BadRequestException('Invalid coin insertion payload.');
   }
-  const insertedAt =
-    typeof payload.insertedAt === 'string'
-      ? new Date(payload.insertedAt)
-      : undefined;
+  const insertedAtRaw =
+    typeof payload.insertedAt === 'string' ? payload.insertedAt : undefined;
+  const insertedAt = insertedAtRaw ? new Date(insertedAtRaw) : undefined;
+  if (insertedAtRaw && insertedAt && Number.isNaN(insertedAt.getTime())) {
+    throw new BadRequestException('Invalid coin insertion payload.');
+  }
   return {
     paymentReference,
     pulseCount,

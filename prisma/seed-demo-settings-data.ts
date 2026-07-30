@@ -1,4 +1,12 @@
 import { ids } from './seed-demo-ids';
+import {
+  COIN_PULSE_MAPPING_SETTING_KEY,
+  HARDWARE_CAPABILITIES_SETTING_KEY,
+  HARDWARE_PIN_MAP_SETTING_KEY,
+  PROTOTYPE_COIN_PULSE_MAPPING,
+  PROTOTYPE_HARDWARE_CAPABILITIES,
+  PROTOTYPE_HARDWARE_PIN_MAP,
+} from '../src/apps/settings/constants/hardware-settings.constants';
 
 export function settings() {
   return [
@@ -17,18 +25,31 @@ export function settings() {
     ),
     setting(
       2,
-      'device.heartbeat-seconds',
+      COIN_PULSE_MAPPING_SETTING_KEY,
       'device',
       ids.station,
       ids.device,
-      'integer',
-      60,
+      'json',
+      PROTOTYPE_COIN_PULSE_MAPPING,
     ),
-    setting(3, 'payments.coin_pulse_mapping', 'global', null, null, 'json', {
-      '1': 200,
-      '2': 300,
-      '5': 500,
-    }),
+    setting(
+      3,
+      HARDWARE_PIN_MAP_SETTING_KEY,
+      'device',
+      ids.station,
+      ids.device,
+      'json',
+      PROTOTYPE_HARDWARE_PIN_MAP,
+    ),
+    setting(
+      4,
+      HARDWARE_CAPABILITIES_SETTING_KEY,
+      'device',
+      ids.station,
+      ids.device,
+      'json',
+      PROTOTYPE_HARDWARE_CAPABILITIES,
+    ),
   ];
 }
 

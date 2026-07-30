@@ -2,6 +2,10 @@ import { Prisma } from '@prisma/client';
 import type { PrismaClient } from '@prisma/client';
 
 import {
+  LEGACY_DEMO_LOCKER_IDS,
+  LEGACY_DEMO_PORT_IDS,
+} from '../src/apps/settings/constants/hardware-settings.constants';
+import {
   credential,
   device,
   locker,
@@ -10,23 +14,33 @@ import {
   station,
 } from './seed-demo-foundation-data';
 import { ids } from './seed-demo-ids';
-import { insertRow } from './seed-utils';
+import { upsertRow } from './seed-utils';
 
 export async function seedDemoFoundation(
   prisma: PrismaClient,
 ): Promise<number> {
   let count = 0;
-  count += await insertRow(prisma, 'stations', station());
-  count += await insertRow(prisma, 'devices', device());
-  count += await insertRow(prisma, 'device_credentials', await credential());
+  await removeLegacyDemoSlots(prisma);
+  count += await upsertRow(prisma, 'stations', station());
+  count += await upsertRow(prisma, 'devices', device());
+  count += await upsertRow(prisma, 'device_credentials', await credential());
   for (let index = 0; index < ids.lockers.length; index += 1) {
-    count += await insertRow(prisma, 'lockers', locker(index));
-    count += await insertRow(prisma, 'charging_ports', port(index));
+    count += await upsertRow(prisma, 'lockers', locker(index));
+    count += await upsertRow(prisma, 'charging_ports', port(index));
   }
   for (const row of packages())
-    count += await insertRow(prisma, 'charging_packages', row);
+    count += await upsertRow(prisma, 'charging_packages', row);
   await normalizePackageValidity(prisma);
   return count;
+}
+
+async function removeLegacyDemoSlots(prisma: PrismaClient) {
+  await prisma.charging_ports.deleteMany({
+    where: { id: { in: [...LEGACY_DEMO_PORT_IDS] } },
+  });
+  await prisma.lockers.deleteMany({
+    where: { id: { in: [...LEGACY_DEMO_LOCKER_IDS] } },
+  });
 }
 
 async function normalizePackageValidity(prisma: PrismaClient): Promise<void> {

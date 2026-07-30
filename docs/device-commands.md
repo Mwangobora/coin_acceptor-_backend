@@ -3,19 +3,18 @@
 Device commands let administrators queue safe backend-to-device instructions and
 let embedded hardware poll for its own pending work.
 
-## Supported Command Types
+## Prototype Command Types
 
 - `device.status_request`
-- `device.restart`
 - `device.sync_configuration`
-- `locker.emergency_open`
-- `locker.lock`
-- `port.power_on`
-- `port.power_off`
+- `charging.start`
+- `charging.stop`
+- `locker.open`
 
 Command payloads must be JSON objects. Payloads containing credential-like
-fields such as `secret`, `token`, `password`, `apiKey`, or private keys are
-rejected or removed from administrative responses.
+fields such as `secret`, `token`, `password`, `apiKey`, private keys, or
+plaintext locker access codes are rejected or removed from administrative
+responses.
 
 ## Create A Command
 
@@ -25,12 +24,17 @@ Cookie: admin_session=...
 Content-Type: application/json
 
 {
-  "commandType": "locker.lock",
-  "payload": { "lockerId": "00000000-0000-0000-0000-000000000000" },
+  "commandType": "charging.start",
+  "payload": {
+    "sessionReference": "SESSION-123",
+    "lockerNumber": 1,
+    "portNumber": 1,
+    "durationSeconds": 20
+  },
   "idempotencyKey": "dispatch-123",
   "availableAt": "2026-07-19T10:00:00.000Z",
   "expiresAt": "2026-07-19T10:05:00.000Z",
-  "reason": "Maintenance reset"
+  "reason": "Prototype test dispatch"
 }
 ```
 
@@ -38,9 +42,8 @@ If `idempotencyKey` is omitted, the backend generates one. Reusing a key with
 the same command returns the existing command. Reusing it with different input
 returns `409 Conflict`.
 
-High-risk `locker.emergency_open` commands require `lockers.emergency_open` and
-a nonblank `reason`. Restart and configuration commands require
-`devices.restart` and `devices.configure` respectively.
+Configuration commands require `devices.configure`. The backend does not persist
+plaintext locker codes inside command payloads.
 
 ## Poll Commands
 
@@ -62,8 +65,13 @@ Response:
   "commands": [
     {
       "id": "00000000-0000-0000-0000-000000000000",
-      "commandType": "locker.lock",
-      "payload": { "lockerId": "00000000-0000-0000-0000-000000000000" },
+      "commandType": "charging.start",
+      "payload": {
+        "sessionReference": "SESSION-123",
+        "lockerNumber": 1,
+        "portNumber": 1,
+        "durationSeconds": 20
+      },
       "requestedAt": "2026-07-19T10:00:00.000Z",
       "expiresAt": "2026-07-19T10:05:00.000Z"
     }
@@ -83,8 +91,8 @@ Content-Type: application/json
 
 {
   "externalEventId": "ack-123",
-  "eventCategory": "command_ack",
-  "eventType": "device.command_ack",
+  "eventCategory": "command",
+  "eventType": "command.acknowledged",
   "occurredAt": "2026-07-19T10:00:30.000Z",
   "payload": {
     "commandId": "00000000-0000-0000-0000-000000000000",

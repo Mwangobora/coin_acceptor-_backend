@@ -4,7 +4,7 @@ import type { PrismaClient } from '@prisma/client';
 import { alerts } from './seed-demo-alerts-data';
 import { auditLogs } from './seed-demo-audit-data';
 import { settings } from './seed-demo-settings-data';
-import { insertRow, requireSeedEnv } from './seed-utils';
+import { insertRow, requireSeedEnv, upsertRow } from './seed-utils';
 
 export async function seedDemoOperations(
   prisma: PrismaClient,
@@ -14,7 +14,7 @@ export async function seedDemoOperations(
   for (const row of alerts(adminId))
     count += await insertRow(prisma, 'alerts', row);
   for (const row of settings())
-    count += await insertRow(prisma, 'system_settings', row);
+    count += await upsertRow(prisma, 'system_settings', row);
   for (const row of auditLogs(adminId))
     count += await insertRow(prisma, 'audit_logs', row);
   return count;

@@ -83,6 +83,13 @@ describe('device command admin APIs', () => {
       .send({ idempotencyKey: 'command-idem-1' })
       .expect(409);
     await command('device.status_request', { secret: 'x' }).expect(400);
+    await command('charging.start', {
+      sessionReference: 'SESSION-ADMIN-001',
+      lockerNumber: 1,
+      portNumber: 1,
+      durationSeconds: 20,
+      accessCode: '123456',
+    }).expect(400);
   });
 
   it('validates ownership and emergency-open controls', async () => {
@@ -93,6 +100,12 @@ describe('device command admin APIs', () => {
       deviceId: otherDeviceId,
       lockerId: otherLocker.id,
     });
+    await command('charging.start', {
+      sessionReference: 'SESSION-OK-001',
+      lockerNumber: 5,
+      portNumber: 1,
+      durationSeconds: 20,
+    }).expect(201);
     await command('locker.lock', { lockerId: otherLocker.id }).expect(400);
     await command('port.power_on', { portId: otherPort.id }).expect(400);
     await command('port.power_on', { portId: port.id }).expect(201);

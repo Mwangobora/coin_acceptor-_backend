@@ -70,7 +70,7 @@ function telemetry(index: number, powerSource: 'grid' | 'backup_battery') {
     temperature_celsius: 34.5,
     connectivity_signal_dbm: -67,
     active_session_count: 1,
-    available_locker_count: 3,
+    available_locker_count: 1,
     metrics: { seed: 'demo' },
   };
 }

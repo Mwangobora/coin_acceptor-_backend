@@ -25,9 +25,6 @@ export const securityConfig = registerAs('security', () => ({
   paymentPendingWindowSeconds: Number(
     process.env.PAYMENT_PENDING_WINDOW_SECONDS ?? 600,
   ),
-  coinPulseMappingJson:
-    process.env.COIN_PULSE_MAPPING_JSON ??
-    '{"1":100,"2":200,"5":500,"10":1000}',
   redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,

@@ -1,5 +1,8 @@
 export const DEVICE_COMMAND_TYPES = [
   'device.status_request',
+  'charging.start',
+  'charging.stop',
+  'locker.open',
   'device.restart',
   'device.sync_configuration',
   'locker.emergency_open',

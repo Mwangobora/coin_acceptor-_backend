@@ -29,7 +29,6 @@ export async function createTestApp(): Promise<{
   process.env.QR_MOCK_WEBHOOK_SECRET = 'test-mock-webhook-secret';
   process.env.QR_PAYMENT_EXPIRY_SECONDS = '300';
   process.env.PAYMENT_PENDING_WINDOW_SECONDS = '600';
-  process.env.COIN_PULSE_MAPPING_JSON = '{"1":100,"2":200,"5":500}';
   process.env.JWT_ACCESS_SECRET = 'test-access-secret';
   process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
   process.env.JWT_ACCESS_TTL = '7d';

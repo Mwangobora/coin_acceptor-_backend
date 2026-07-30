@@ -13,9 +13,11 @@ import {
 import {
   deviceRecord,
   packageRecord,
+  settingRecord,
   stationRecord,
 } from './admin-resource-test-utils';
 import { apiCredential, auth } from './device-ingestion-test-utils';
+import { COIN_PULSE_MAPPING_SETTING_KEY } from '../src/apps/settings/constants/hardware-settings.constants';
 
 jest.setTimeout(30_000);
 
@@ -37,10 +39,26 @@ describe('payments', () => {
       'PAYMENT_DEVICE',
       'active',
     );
-    const pkg = await packageRecord(prisma, station.id, 'PAYMENT_PACKAGE');
+    const pkg = await packageRecord(prisma, station.id, 'PAYMENT_PACKAGE', 50);
     stationId = station.id;
     packageId = pkg.id;
     apiKeyId = await apiCredential(prisma, device.id, apiSecret);
+    await settingRecord(prisma, {
+      settingKey: COIN_PULSE_MAPPING_SETTING_KEY,
+      scopeType: 'device',
+      stationId: station.id,
+      deviceId: device.id,
+      valueJson: {
+        currency: 'TZS',
+        settleWindowMs: 500,
+        entries: [
+          { pulseCount: 4, amountMinor: 50, durationSeconds: 20 },
+          { pulseCount: 8, amountMinor: 100, durationSeconds: 40 },
+          { pulseCount: 12, amountMinor: 200, durationSeconds: 60 },
+          { pulseCount: 16, amountMinor: 500, durationSeconds: 120 },
+        ],
+      },
+    });
   });
 
   afterAll(async () => {
@@ -59,7 +77,7 @@ describe('payments', () => {
     await request(server)
       .post('/api/v1/device-ingestion/events')
       .set('Authorization', auth(apiKeyId, apiSecret))
-      .send(coinEvent('coin-ok', payment.paymentReference, 5))
+      .send(coinEvent('coin-ok', payment.paymentReference, 4, 999_999))
       .expect(({ body }) =>
         expect((body as EventResponse).processingStatus).toBe('processed'),
       );
@@ -69,7 +87,7 @@ describe('payments', () => {
       .expect(({ body }) => {
         const response = body as PaymentResponse;
         expect(response.status).toBe('confirmed');
-        expect(response.receivedAmountMinor).toBe('500');
+        expect(response.receivedAmountMinor).toBe('50');
       });
   });
 
@@ -98,7 +116,7 @@ describe('payments', () => {
       merchantReference: qr.merchant_reference,
       providerTransactionId: 'provider-confirmed-1',
       status: 'confirmed',
-      amountMinor: 500,
+      amountMinor: 50,
       currency: 'TZS',
     });
     await request(server)
@@ -166,13 +184,23 @@ type PaymentResponse = {
 };
 type WebhookResponse = { payment: PaymentResponse };
 
-function coinEvent(id: string, paymentReference: string, pulseCount: number) {
+function coinEvent(
+  id: string,
+  paymentReference: string,
+  pulseCount: number,
+  amountMinor?: number,
+) {
   return {
     externalEventId: id,
     eventCategory: 'payment',
     eventType: 'payment.coin_inserted',
     occurredAt: new Date().toISOString(),
-    payload: { paymentReference, pulseCount },
+    payload: {
+      paymentReference,
+      pulseCount,
+      insertedAt: new Date().toISOString(),
+      ...(amountMinor ? { amountMinor } : {}),
+    },
   };
 }
 

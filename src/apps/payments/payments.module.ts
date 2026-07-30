@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AccessControlModule } from '../access-control/access-control.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { SettingsModule } from '../settings/settings.module';
 import { PrismaModule } from '../../database/prisma.module';
 import { CoinInsertionEventHandler } from './handlers/coin-insertion-event.handler';
 import { PaymentsController } from './payments.controller';
@@ -21,7 +22,7 @@ import { PaymentWebhookService } from './services/payment-webhook.service';
 import { QrPaymentService } from './services/qr-payment.service';
 
 @Module({
-  imports: [PrismaModule, AuditLogsModule, AccessControlModule],
+  imports: [PrismaModule, AuditLogsModule, AccessControlModule, SettingsModule],
   controllers: [PaymentsController, PaymentWebhooksController],
   providers: [
     ChargingPackageReadService,

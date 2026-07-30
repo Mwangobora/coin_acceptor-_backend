@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import type { CreateDeviceEventDto } from '../dto/create-device-event.dto';
+import { HardwareEventContractValidator } from './hardware-event-contract.validator';
 import { SensitivePayloadService } from './sensitive-payload.service';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class DeviceEventValidatorService {
 
   constructor(
     private readonly sensitive: SensitivePayloadService,
+    private readonly hardware: HardwareEventContractValidator,
     config: ConfigService,
   ) {
     this.maxFutureSeconds = config.getOrThrow<number>(
@@ -29,6 +31,7 @@ export class DeviceEventValidatorService {
       throw new BadRequestException('payload must be an object.');
     }
     this.sensitive.assertSafe(dto.payload);
+    this.hardware.validate(dto);
     return occurredAt;
   }
 }

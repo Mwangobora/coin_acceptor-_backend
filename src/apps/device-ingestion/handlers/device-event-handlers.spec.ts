@@ -51,9 +51,9 @@ describe('device event handlers', () => {
   it('delegates command acknowledgements', async () => {
     const commands = { acknowledge: jest.fn() };
     const handler = new CommandAckEventHandler(commands as never);
-    expect(handler.canHandle('command_ack')).toBe(true);
-    expect(handler.canHandle('heartbeat')).toBe(false);
-    await handler.handle(context({}, 'command_ack', 'device.command_ack'));
+    expect(handler.canHandle('command', 'command.acknowledged')).toBe(true);
+    expect(handler.canHandle('heartbeat', 'device.heartbeat')).toBe(false);
+    await handler.handle(context({}, 'command', 'command.acknowledged'));
     expect(commands.acknowledge).toHaveBeenCalled();
   });
 });

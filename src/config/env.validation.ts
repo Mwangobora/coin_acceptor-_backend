@@ -25,7 +25,6 @@ export type EnvironmentVariables = {
   QR_MOCK_WEBHOOK_SECRET: string;
   QR_PAYMENT_EXPIRY_SECONDS: number;
   PAYMENT_PENDING_WINDOW_SECONDS: number;
-  COIN_PULSE_MAPPING_JSON: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_TTL: string;

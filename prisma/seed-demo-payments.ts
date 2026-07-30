@@ -4,7 +4,7 @@ import { ids } from './seed-demo-ids';
 import { qrTransactions } from './seed-demo-payment-qr';
 import { insertRow } from './seed-utils';
 
-const PACKAGE_AMOUNTS = [500, 1000, 1800];
+const PACKAGE_AMOUNTS = [50, 100, 200];
 
 export async function seedDemoPayments(prisma: PrismaClient): Promise<number> {
   let count = 0;
@@ -63,9 +63,9 @@ function payments() {
 
 function coinInsertions() {
   return [
-    coinInsertion(0, 0, 1, 200, 200, true),
-    coinInsertion(1, 0, 2, 300, 300, true),
-    coinInsertion(2, 0, 7, 1, 0, false),
+    coinInsertion(0, 0, 4, 50, 50, true),
+    coinInsertion(1, 1, 8, 100, 100, true),
+    coinInsertion(2, 2, 6, 1, 0, false),
   ];
 }
 

@@ -8,6 +8,7 @@ import { CommandAcknowledgementService } from './services/command-acknowledgemen
 import { CommandExpiryService } from './services/command-expiry.service';
 import { CommandIdempotencyService } from './services/command-idempotency.service';
 import { CommandPayloadSanitizerService } from './services/command-payload-sanitizer.service';
+import { HardwareCommandContractValidator } from './services/hardware-command-contract.validator';
 import { CommandPayloadValidatorRegistry } from './services/command-payload-validator-registry';
 import { CommandPollingService } from './services/command-polling.service';
 import { CommandQueryBuilder } from './services/command-query.builder';
@@ -25,6 +26,7 @@ import { DeviceCommandsService } from './services/device-commands.service';
     CommandAcknowledgementService,
     CommandIdempotencyService,
     CommandPayloadSanitizerService,
+    HardwareCommandContractValidator,
     CommandPayloadValidatorRegistry,
     CommandQueryBuilder,
     CommandRequirementsPolicy,

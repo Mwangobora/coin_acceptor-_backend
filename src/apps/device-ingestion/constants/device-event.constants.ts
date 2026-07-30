@@ -2,10 +2,12 @@ export const DEVICE_EVENT_CATEGORIES = [
   'heartbeat',
   'telemetry',
   'payment',
+  'charging',
   'session',
   'locker',
   'power',
   'alert',
+  'command',
   'command_ack',
   'system',
 ] as const;

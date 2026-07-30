@@ -14,6 +14,7 @@ describe('CommandRequirementsPolicy', () => {
       'devices.configure',
     );
     expect(policy.extraPermission('device.status_request')).toBeUndefined();
+    expect(policy.extraPermission('charging.start')).toBeUndefined();
   });
 
   it('validates reasons and command time windows', () => {

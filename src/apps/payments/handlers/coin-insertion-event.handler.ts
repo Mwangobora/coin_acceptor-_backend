@@ -88,6 +88,7 @@ export class CoinInsertionEventHandler implements DeviceEventHandler {
         entityId: payment.id,
         stationId: payment.station_id,
         reason: 'Unsupported coin pulse count.',
+        metadata: { pulseCount: payload.pulseCount },
       },
       tx,
     );

@@ -3,7 +3,6 @@ export type PaymentEnv = {
   QR_MOCK_WEBHOOK_SECRET: string;
   QR_PAYMENT_EXPIRY_SECONDS: number;
   PAYMENT_PENDING_WINDOW_SECONDS: number;
-  COIN_PULSE_MAPPING_JSON: string;
 };
 
 export function parsePaymentEnv(
@@ -27,11 +26,6 @@ export function parsePaymentEnv(
       'PAYMENT_PENDING_WINDOW_SECONDS',
       600,
     ),
-    COIN_PULSE_MAPPING_JSON: parseJsonString(
-      config,
-      'COIN_PULSE_MAPPING_JSON',
-      '{"1":100,"2":200,"5":500,"10":1000}',
-    ),
   };
 }
 
@@ -41,20 +35,6 @@ function parseQrProvider(config: Record<string, unknown>, nodeEnv: string) {
     throw new Error('QR_PAYMENT_PROVIDER=mock is not allowed in production.');
   }
   return provider;
-}
-
-function parseJsonString(
-  config: Record<string, unknown>,
-  key: string,
-  defaultValue: string,
-) {
-  const value = optionalString(config, key, defaultValue);
-  try {
-    JSON.parse(value);
-  } catch {
-    throw new Error(`${key} must be valid JSON.`);
-  }
-  return value;
 }
 
 function parsePositiveInt(value: unknown, key: string, defaultValue: number) {

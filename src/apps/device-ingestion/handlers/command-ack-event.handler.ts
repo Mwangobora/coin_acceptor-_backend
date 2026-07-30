@@ -10,8 +10,11 @@ import type {
 export class CommandAckEventHandler implements DeviceEventHandler {
   constructor(private readonly commands: CommandAcknowledgementService) {}
 
-  canHandle(category: string): boolean {
-    return category === 'command_ack';
+  canHandle(category: string, eventType: string): boolean {
+    return (
+      (category === 'command_ack' && eventType === 'device.command_ack') ||
+      (category === 'command' && eventType === 'command.acknowledged')
+    );
   }
 
   async handle(context: DeviceEventContext): Promise<void> {

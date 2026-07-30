@@ -2,12 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../database/prisma.service';
 import { CommandPayloadSanitizerService } from './command-payload-sanitizer.service';
+import { HardwareCommandContractValidator } from './hardware-command-contract.validator';
 
 @Injectable()
 export class CommandPayloadValidatorRegistry {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sanitizer: CommandPayloadSanitizerService,
+    private readonly hardware: HardwareCommandContractValidator,
   ) {}
 
   async validate(input: {
@@ -16,8 +18,12 @@ export class CommandPayloadValidatorRegistry {
     payload: Record<string, unknown>;
   }): Promise<void> {
     this.sanitizer.assertSafe(input.payload);
+    this.hardware.validate(input.commandType, input.payload);
     if (input.commandType.startsWith('locker.')) {
       await this.requireLocker(input.deviceId, input.payload);
+    }
+    if (input.commandType.startsWith('charging.')) {
+      await this.requireChargingPort(input.deviceId, input.payload);
     }
     if (input.commandType.startsWith('port.')) {
       await this.requirePort(input.deviceId, input.payload);
@@ -43,6 +49,30 @@ export class CommandPayloadValidatorRegistry {
     if (!portId) throw new BadRequestException('Port identity is required.');
     const port = await this.prisma.charging_ports.findFirst({
       where: { id: portId, device_id: deviceId },
+    });
+    if (!port) throw new BadRequestException('Port does not belong to device.');
+  }
+
+  private async requireChargingPort(
+    deviceId: string,
+    payload: Record<string, unknown>,
+  ) {
+    const portId = stringValue(payload.portId);
+    if (portId) {
+      await this.requirePort(deviceId, payload);
+      return;
+    }
+    const lockerNumber = numberValue(payload.lockerNumber);
+    const portNumber = numberValue(payload.portNumber);
+    if (lockerNumber === undefined || portNumber === undefined) {
+      throw new BadRequestException('Locker and port identity are required.');
+    }
+    const port = await this.prisma.charging_ports.findFirst({
+      where: {
+        device_id: deviceId,
+        port_number: portNumber,
+        lockers: { locker_number: lockerNumber },
+      },
     });
     if (!port) throw new BadRequestException('Port does not belong to device.');
   }

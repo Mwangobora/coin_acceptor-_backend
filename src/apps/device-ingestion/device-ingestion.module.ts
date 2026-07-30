@@ -17,6 +17,7 @@ import { TelemetryEventHandler } from './handlers/telemetry-event.handler';
 import { DeviceApiKeyService } from './services/device-api-key.service';
 import { DeviceAuthService } from './services/device-auth.service';
 import { DeviceEventProcessor } from './services/device-event-processor';
+import { HardwareEventContractValidator } from './services/hardware-event-contract.validator';
 import { DeviceEventReadService } from './services/device-event-read.service';
 import { DeviceEventValidatorService } from './services/device-event-validator.service';
 import { DeviceEventService } from './services/device-event.service';
@@ -47,6 +48,7 @@ import { SensitivePayloadService } from './services/sensitive-payload.service';
     DeviceTelemetryReadService,
     DeviceEventProcessor,
     DeviceEventValidatorService,
+    HardwareEventContractValidator,
     PayloadHashService,
     SensitivePayloadService,
     HeartbeatEventHandler,

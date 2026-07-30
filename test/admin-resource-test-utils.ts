@@ -52,6 +52,28 @@ export function packageRecord(
   });
 }
 
+export function settingRecord(
+  prisma: PrismaClient,
+  input: {
+    settingKey: string;
+    scopeType: 'global' | 'station' | 'device';
+    valueJson: object;
+    stationId?: string;
+    deviceId?: string;
+  },
+) {
+  return prisma.system_settings.create({
+    data: {
+      setting_key: input.settingKey,
+      scope_type: input.scopeType,
+      station_id: input.scopeType === 'global' ? null : input.stationId,
+      device_id: input.scopeType === 'device' ? input.deviceId : null,
+      value_type: 'json',
+      value_json: input.valueJson,
+    },
+  });
+}
+
 export function lockerRecord(
   prisma: PrismaClient,
   deviceId: string,

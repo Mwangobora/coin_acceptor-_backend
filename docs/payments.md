@@ -24,15 +24,18 @@ Coin insertions are ingested through `POST /device-ingestion/events` with:
   "eventType": "payment.coin_inserted",
   "payload": {
     "paymentReference": "PAY-...",
-    "pulseCount": 5,
+    "pulseCount": 4,
     "insertedAt": "2026-07-19T09:10:00.000Z"
   }
 }
 ```
 
-Coin pulses are mapped from the active `payments.coin_pulse_mapping`
-`system_settings` row, scoped in this order: device, station, global. If no
-setting exists, `COIN_PULSE_MAPPING_JSON` is used.
+Coin pulses are mapped from the active `coin.pulse_mapping` `system_settings`
+row, scoped in this order: device, station, global. If no valid setting exists,
+the event is rejected safely.
+
+The backend derives money and duration from the mapping. The device must not
+send trusted `amountMinor`, `currency`, or `durationSeconds` values.
 
 ## QR Routes
 

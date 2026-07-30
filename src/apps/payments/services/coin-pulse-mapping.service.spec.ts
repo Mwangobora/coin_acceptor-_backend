@@ -3,48 +3,62 @@ import { BadRequestException } from '@nestjs/common';
 import { CoinPulseMappingService } from './coin-pulse-mapping.service';
 
 describe('CoinPulseMappingService', () => {
-  const config = {
-    getOrThrow: jest.fn().mockReturnValue('{"1":100,"5":500}'),
+  const settings = { resolveActiveJsonSetting: jest.fn() };
+  const validator = {
+    resolve: jest.fn(),
   };
-  const prisma = { system_settings: { findMany: jest.fn() } };
-  const service = new CoinPulseMappingService(prisma as never, config as never);
+  const service = new CoinPulseMappingService(
+    settings as never,
+    validator as never,
+  );
 
   beforeEach(() => {
-    prisma.system_settings.findMany.mockReset();
+    settings.resolveActiveJsonSetting.mockReset();
+    validator.resolve.mockReset();
   });
 
   it('uses scoped settings in device, station, global priority order', async () => {
-    prisma.system_settings.findMany.mockResolvedValue([
-      { scope_type: 'global', value_json: { '5': 100 } },
-      { scope_type: 'station', value_json: { '5': 300 } },
-      { scope_type: 'device', value_json: { '5': 500 } },
-    ]);
+    settings.resolveActiveJsonSetting.mockResolvedValue({
+      scope_type: 'device',
+      value_json: { currency: 'TZS', settleWindowMs: 500, entries: [] },
+    });
+    validator.resolve.mockReturnValue({
+      pulseCount: 16,
+      amountMinor: 500,
+      durationSeconds: 120,
+      currency: 'TZS',
+      settleWindowMs: 500,
+    });
     await expect(
       service.denominationFor({
         stationId: 'station-1',
         deviceId: 'device-1',
-        pulseCount: 5,
+        pulseCount: 16,
       }),
     ).resolves.toBe(500n);
   });
 
-  it('falls back to env config and rejects invalid mappings', async () => {
-    prisma.system_settings.findMany.mockResolvedValue([]);
+  it('rejects missing settings and invalid mappings', async () => {
+    settings.resolveActiveJsonSetting.mockResolvedValue(null);
     await expect(
       service.denominationFor({
         stationId: 'station-1',
         deviceId: 'device-1',
-        pulseCount: 1,
+        pulseCount: 4,
       }),
-    ).resolves.toBe(100n);
-    prisma.system_settings.findMany.mockResolvedValue([
-      { scope_type: 'global', value_json: { zero: 0 } },
-    ]);
+    ).rejects.toThrow(BadRequestException);
+    settings.resolveActiveJsonSetting.mockResolvedValue({
+      scope_type: 'global',
+      value_json: {},
+    });
+    validator.resolve.mockImplementation(() => {
+      throw new BadRequestException('bad mapping');
+    });
     await expect(
       service.denominationFor({
         stationId: 'station-1',
         deviceId: 'device-1',
-        pulseCount: 1,
+        pulseCount: 4,
       }),
     ).rejects.toThrow(BadRequestException);
   });
