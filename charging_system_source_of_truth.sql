@@ -1,12 +1,13 @@
 -- ============================================================================
 -- QR-Code & Coin-Based Mobile Phone Charging System
 -- PostgreSQL Database Schema — Source of Truth
--- Schema version: 1.0.0
--- Generated: 2026-07-19
+-- Schema version: 1.0.1
+-- Generated: 2026-07-30
 --
 -- Purpose:
 --   Administrative web application, embedded-device ingestion, dual payment,
---   timed charging, secure lockers, telemetry, alerts, reporting, and auditing.
+--   timed charging, secure lockers, hardware-scoped configuration, telemetry,
+--   alerts, reporting, and auditing.
 --
 -- Table inventory:
 --   01 users
@@ -767,10 +768,12 @@ CREATE TABLE device_events (
                 'heartbeat',
                 'telemetry',
                 'payment',
+                'charging',
                 'session',
                 'locker',
                 'power',
                 'alert',
+                'command',
                 'command_ack',
                 'system'
             )
@@ -808,7 +811,7 @@ COMMENT ON TABLE device_events IS
 COMMENT ON COLUMN device_events.external_event_id IS
     'Firmware-generated event identifier, unique per device.';
 COMMENT ON COLUMN device_events.payload IS
-    'Validated raw device payload; must never contain secrets or phone files.';
+    'Validated raw device payload; must never contain secrets, plaintext locker codes, or phone files.';
 
 CREATE UNIQUE INDEX uq_device_events_device_sequence
     ON device_events(device_id, sequence_number)
@@ -1205,6 +1208,8 @@ COMMENT ON COLUMN payments.expected_amount_minor IS
     'Integer minor units; for TZS this equals whole shillings.';
 COMMENT ON COLUMN payments.package_name_snapshot IS
     'Immutable package label captured when payment is created.';
+COMMENT ON COLUMN payments.received_amount_minor IS
+    'Trusted backend total only; device-reported money must never be accepted without mapping validation.';
 
 CREATE INDEX idx_payments_station_initiated
     ON payments(station_id, initiated_at DESC);
@@ -1710,7 +1715,7 @@ CREATE TABLE charging_sessions (
 COMMENT ON TABLE charging_sessions IS
     'Paid charging lifecycle for one locker and one charging port.';
 COMMENT ON COLUMN charging_sessions.access_code_hash IS
-    'One-way hash of the temporary locker code; plaintext is forbidden.';
+    'One-way hash of the temporary locker code; plaintext is forbidden and the prototype device generates the code locally.';
 
 CREATE UNIQUE INDEX uq_charging_sessions_active_locker
     ON charging_sessions(locker_id)
@@ -2143,7 +2148,7 @@ CREATE TABLE system_settings (
 COMMENT ON TABLE system_settings IS
     'Versioned non-secret operational configuration at global, station, or device scope.';
 COMMENT ON COLUMN system_settings.value_json IS
-    'Must not contain credentials, API secrets, passwords, or locker codes.';
+    'Must not contain credentials, API secrets, passwords, plaintext locker codes, or other device secrets.';
 
 CREATE UNIQUE INDEX uq_system_settings_global
     ON system_settings(setting_key)
@@ -2296,6 +2301,10 @@ COMMENT ON SCHEMA charging_system IS
 --   * HMAC secrets: encrypt with an application/KMS-managed key; hashes cannot
 --     be used to verify HMAC signatures.
 --   * Device events: authenticate, validate, deduplicate, then process.
+--   * Coin pulse mappings: resolve from versioned system_settings using
+--     device -> station -> global precedence; never trust device money values.
+--   * Prototype hardware settings: store non-secret pin maps and capabilities
+--     in system_settings; do not store API keys, HMAC secrets, or locker codes.
 --   * Reports: derive from payments, sessions, telemetry, devices, and alerts.
 --   * Customer privacy: do not store phone files, contacts, messages, or
 --     unnecessary payer-identifying data.
