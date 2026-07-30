@@ -4,6 +4,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 export class HardwareCommandContractValidator {
   validate(commandType: string, payload: Record<string, unknown>): void {
     if (commandType === 'charging.prepare') {
+      rejectPlaintextAccessCode(payload);
       requireString(payload.sessionReference, 'sessionReference');
       requireString(payload.accessCodeVerifier, 'accessCodeVerifier');
       requirePositiveInt(payload.durationSeconds, 'durationSeconds');
@@ -27,6 +28,14 @@ export class HardwareCommandContractValidator {
     if (commandType === 'locker.open') {
       requireLockerIdentity(payload);
     }
+  }
+}
+
+function rejectPlaintextAccessCode(payload: Record<string, unknown>) {
+  if ('accessCode' in payload || 'pin' in payload || 'lockerPin' in payload) {
+    throw new BadRequestException(
+      'charging.prepare must not contain plaintext PIN.',
+    );
   }
 }
 

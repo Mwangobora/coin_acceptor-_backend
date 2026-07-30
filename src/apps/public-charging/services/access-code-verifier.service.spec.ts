@@ -7,13 +7,13 @@ describe('AccessCodeVerifierService', () => {
     const canonical = canonicalInput({
       sessionReference: 'SESSION-123',
       lockerNumber: 2,
-      pin: '483921',
+      pin: '4839',
     });
     const verifier = createHmac('sha256', 'device-secret')
       .update(canonical)
       .digest('hex');
 
-    expect(canonical).toBe('SESSION-123:2:483921');
+    expect(canonical).toBe('SESSION-123:2:4839');
     expect(`hmac-sha256:${verifier}`).toMatch(/^hmac-sha256:[a-f0-9]{64}$/);
   });
 });

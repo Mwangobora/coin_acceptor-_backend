@@ -29,9 +29,14 @@ locker numbers, payment amounts, or admin URLs.
 7. `GET /payments/:paymentReference/status` requires
    `X-Customer-Flow-Token`.
 8. After provider confirmation, the backend reserves a locker/port and creates a
-   pending charging session.
+   pending charging session. It does not queue `charging.start`.
 9. `POST /sessions/:sessionReference/access-code` returns the locker PIN once.
-10. `GET /sessions/:sessionReference` returns customer-safe session guidance.
+10. The PIN claim queues `charging.prepare` with an HMAC verifier only.
+11. The device opens the locker after the first valid PIN entry for phone
+    deposit.
+12. Charging begins only after the device confirms locker opened, phone
+    connected where detectable, and locker closed.
+13. `GET /sessions/:sessionReference` returns customer-safe session guidance.
 
 ## Tokens
 
@@ -46,6 +51,7 @@ listing, payment initiation, status polling, PIN claim, and session status.
 
 ## Firmware Limitation
 
-The backend now queues `charging.prepare` commands with an HMAC verifier. The
-current physical prototype firmware is not claimed to support remote command
-polling or verifier comparison until firmware integration is completed.
+The backend now queues `charging.prepare` commands with an HMAC verifier after
+PIN claim. The current physical prototype firmware is not claimed to support
+remote command polling, verifier comparison, or the final collection lifecycle
+until firmware integration is completed.

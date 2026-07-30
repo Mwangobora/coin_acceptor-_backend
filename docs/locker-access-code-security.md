@@ -1,6 +1,6 @@
 # Locker Access Code Security
 
-The locker PIN is a backend-generated six-digit numeric code. It is not an
+The locker PIN is a backend-generated four-digit numeric code. It is not an
 M-Pesa transaction code and is not derived from the payment reference.
 
 ## One-Time Display
@@ -37,6 +37,10 @@ The canonical verifier input is:
 The verifier uses the active device HMAC secret. Device commands receive only
 the verifier, never the plaintext PIN.
 
+The ESP32 must verify customer keypad input against this verifier. It must not
+generate the customer PIN locally and must not use Arduino `random()` for this
+workflow.
+
 ## Command Payload
 
 ```json
@@ -48,3 +52,7 @@ the verifier, never the plaintext PIN.
   "accessCodeVerifier": "hmac-sha256:..."
 }
 ```
+
+`charging.prepare` is queued only after the customer successfully claims the
+PIN. Payment confirmation never queues `charging.start` and never energizes the
+charging relay.

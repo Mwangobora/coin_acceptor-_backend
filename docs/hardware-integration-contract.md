@@ -41,8 +41,7 @@ charging port per locker.
 ## 5. Current offline behaviour
 
 The current firmware is local-only. It accepts coins, controls relays, displays
-messages on the LCD, reads keypad input, tracks local charging time, and
-generates six-digit locker codes inside device memory.
+messages on the LCD, reads keypad input, and tracks local charging time.
 
 The current firmware does not yet contain:
 
@@ -54,6 +53,7 @@ The current firmware does not yet contain:
 - QR payment
 - Backend telemetry
 - Backend-controlled sessions
+- Backend-generated four-digit locker PIN verification
 
 ## 6. Planned backend integration
 
@@ -114,53 +114,57 @@ active pulse mapping. The device must not send trusted monetary values.
 
 Required connected-firmware command types:
 
+- `charging.prepare`
 - `charging.start`
 - `charging.stop`
 - `locker.open`
 - `device.status_request`
 - `device.sync_configuration`
 
-`charging.start` payload:
+`charging.prepare` payload:
 
 ```json
 {
   "sessionReference": "SESSION-...",
   "lockerNumber": 1,
   "portNumber": 1,
-  "durationSeconds": 20
+  "durationSeconds": 1200,
+  "accessCodeVerifier": "hmac-sha256:..."
 }
 ```
 
-Plaintext locker access codes must not be persisted in command payloads.
+Plaintext locker access codes must never be persisted in command payloads.
+`charging.prepare` is queued only after the customer claims the backend-created
+PIN. Payment confirmation must not queue `charging.start`.
 
 ## 11. Charging-session sequence
 
-Planned online sequence:
+Final QR/mobile-money online sequence:
 
-1. Customer starts a coin-payment operation.
-2. Device receives coin pulses.
-3. Device sends `payment.coin_inserted`.
-4. Backend validates the active pulse mapping.
-5. Backend confirms the payment.
-6. Backend selects an available locker and charging port.
-7. Backend creates a charging session.
-8. Backend queues `charging.start`.
-9. Device receives the command.
-10. Device energizes the matching relay.
-11. Device generates and displays the locker code.
-12. Device sends `charging.started`.
-13. Device sends `charging.progress`.
-14. Device stops charging on expiry.
-15. Device sends `charging.completed`.
-16. Backend marks the session completed.
-17. Locker returns to available after collection.
+1. Customer confirms payment through the browser flow.
+2. Backend reserves one locker and one charging port.
+3. Backend creates a pending charging session.
+4. Customer claims the four-digit locker PIN.
+5. Backend stores only `hmac-sha256:<hex>` and queues `charging.prepare`.
+6. Device receives `charging.prepare`.
+7. First valid PIN entry opens the locker for phone deposit.
+8. Device confirms locker opened, phone connected where detectable, and locker
+   closed.
+9. Only then may the device energize the matching relay and report
+   `charging.started`.
+10. Device stops the relay when charging time ends and keeps the locker locked.
+11. The same PIN opens the locker for phone collection.
+12. After phone collection and locker closure, the backend invalidates access
+    usage, completes the session, and releases the locker and port.
+13. During active charging, the device must prevent repeated locker opens unless
+    a separately authorized early-collection workflow exists.
 
 ## 12. Locker-code security
 
-The prototype generates a six-digit code locally. The plaintext code stays on
-the device, is shown on the LCD, and must not be sent to the backend or normal
-logs. The backend stores only `accessCodeHash`. Arduino `random()` must later
-be replaced with ESP32 secure randomness.
+The backend generates the four-digit customer PIN. The ESP32 must not generate
+the customer PIN with Arduino `random()` or any local pseudo-random flow. The
+device receives only `accessCodeVerifier`, verifies keypad input securely, and
+must never log or transmit the plaintext PIN.
 
 ## 13. Idempotency rules
 
@@ -183,4 +187,5 @@ duplicate submissions without idempotency checks.
 - Acknowledge command execution
 - Support backend configuration sync
 - Emit charging lifecycle events
-- Replace insecure random code generation
+- Implement backend-generated PIN verifier checks
+- Enforce deposit and collection phases without repeated active-charging opens

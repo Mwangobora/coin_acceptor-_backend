@@ -119,13 +119,14 @@ describe('public charging flow', () => {
       .expect(200);
     const sessionReference = (status.body as StatusBody).sessionReference;
     expect(sessionReference).toEqual(expect.stringContaining('SESSION-'));
+    await expectNoCommandQueuedBeforePinClaim(sessionReference);
 
     const claim = await request(server)
       .post(`/api/v1/public/charging/sessions/${sessionReference}/access-code`)
       .set('x-customer-flow-token', payment.customerFlowToken)
       .expect(201);
     const accessCode = (claim.body as ClaimBody).accessCode;
-    expect(accessCode).toMatch(/^\d{6}$/);
+    expect(accessCode).toMatch(/^\d{4}$/);
     await request(server)
       .post(`/api/v1/public/charging/sessions/${sessionReference}/access-code`)
       .set('x-customer-flow-token', payment.customerFlowToken)
@@ -139,8 +140,11 @@ describe('public charging flow', () => {
     const command = await prisma.device_commands.findFirstOrThrow({
       where: { command_type: 'charging.prepare' },
     });
+    const commandPayload = command.payload as Record<string, unknown>;
     expect(JSON.stringify(command.payload)).toContain('hmac-sha256:');
     expect(JSON.stringify(command.payload)).not.toContain(accessCode);
+    expect(commandPayload).not.toHaveProperty('accessCode');
+    await expectNoStartCommandForSession(sessionReference);
   });
 
   it('keeps admin APIs authenticated', async () => {
@@ -188,6 +192,28 @@ describe('public charging flow', () => {
       .set('x-mock-signature', signature(body))
       .send(body)
       .expect(201);
+  }
+
+  async function expectNoCommandQueuedBeforePinClaim(reference: string) {
+    const commands = await publicSessionCommands(reference);
+    expect(commands).toHaveLength(0);
+  }
+
+  async function expectNoStartCommandForSession(reference: string) {
+    const commands = await publicSessionCommands(reference);
+    expect(commands.map((command) => command.command_type)).not.toContain(
+      'charging.start',
+    );
+  }
+
+  async function publicSessionCommands(reference: string) {
+    const commands = await prisma.device_commands.findMany({
+      where: { command_type: { in: ['charging.prepare', 'charging.start'] } },
+    });
+    return commands.filter((command) => {
+      const payload = command.payload as Record<string, unknown> | null;
+      return payload?.sessionReference === reference;
+    });
   }
 
   function signature(body: string) {

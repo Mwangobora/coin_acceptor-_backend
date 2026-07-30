@@ -49,6 +49,19 @@ describe('HardwareCommandContractValidator', () => {
     ).toThrow(BadRequestException);
   });
 
+  it('rejects prepare payloads with plaintext PIN fields', () => {
+    expect(() =>
+      validator.validate('charging.prepare', {
+        sessionReference: 'SESSION-001',
+        lockerNumber: 1,
+        portNumber: 1,
+        durationSeconds: 120,
+        accessCodeVerifier: `hmac-sha256:${'a'.repeat(64)}`,
+        accessCode: '4839',
+      }),
+    ).toThrow(BadRequestException);
+  });
+
   it('accepts locker and stop commands with valid identities', () => {
     expect(() =>
       validator.validate('locker.open', { lockerNumber: 1 }),

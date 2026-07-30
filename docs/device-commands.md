@@ -7,6 +7,7 @@ let embedded hardware poll for its own pending work.
 
 - `device.status_request`
 - `device.sync_configuration`
+- `charging.prepare`
 - `charging.start`
 - `charging.stop`
 - `locker.open`
@@ -24,12 +25,13 @@ Cookie: admin_session=...
 Content-Type: application/json
 
 {
-  "commandType": "charging.start",
+  "commandType": "charging.prepare",
   "payload": {
     "sessionReference": "SESSION-123",
     "lockerNumber": 1,
     "portNumber": 1,
-    "durationSeconds": 20
+    "durationSeconds": 1200,
+    "accessCodeVerifier": "hmac-sha256:..."
   },
   "idempotencyKey": "dispatch-123",
   "availableAt": "2026-07-19T10:00:00.000Z",
@@ -43,7 +45,9 @@ the same command returns the existing command. Reusing it with different input
 returns `409 Conflict`.
 
 Configuration commands require `devices.configure`. The backend does not persist
-plaintext locker codes inside command payloads.
+plaintext locker codes inside command payloads. `charging.prepare` is queued
+only after the customer claims the PIN; payment confirmation must not queue
+`charging.start`.
 
 ## Poll Commands
 
@@ -65,12 +69,13 @@ Response:
   "commands": [
     {
       "id": "00000000-0000-0000-0000-000000000000",
-      "commandType": "charging.start",
+      "commandType": "charging.prepare",
       "payload": {
         "sessionReference": "SESSION-123",
         "lockerNumber": 1,
         "portNumber": 1,
-        "durationSeconds": 20
+        "durationSeconds": 1200,
+        "accessCodeVerifier": "hmac-sha256:..."
       },
       "requestedAt": "2026-07-19T10:00:00.000Z",
       "expiresAt": "2026-07-19T10:05:00.000Z"
@@ -114,3 +119,11 @@ belong to the authenticated device and must already be `sent`.
 - Completed commands cannot return to `acknowledged`.
 - Expiry processing marks expired `queued` or `sent` commands as `expired` in
   locked batches.
+
+## Public Charging Rule
+
+For QR/mobile-money public sessions, the relay must not start because payment
+was confirmed. The connected device receives `charging.prepare`, verifies the
+four-digit PIN locally using `accessCodeVerifier`, opens the locker for deposit,
+and starts charging only after locker-opened, phone-connected where detectable,
+and locker-closed confirmations.

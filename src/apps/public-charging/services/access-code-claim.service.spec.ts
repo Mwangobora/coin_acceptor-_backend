@@ -56,7 +56,7 @@ function serviceWith(
   return new AccessCodeClaimService(
     prisma as never,
     flows as never,
-    { generate: jest.fn().mockReturnValue('483921') },
+    { generate: jest.fn().mockReturnValue('4839') },
     { verifier: jest.fn().mockResolvedValue('hmac-sha256:abc') } as never,
     audit as never,
   );
