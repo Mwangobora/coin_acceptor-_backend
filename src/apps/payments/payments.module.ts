@@ -46,6 +46,7 @@ import { QrPaymentService } from './services/qr-payment.service';
     PaymentCancellationService,
     PaymentInitiationService,
     PaymentReadService,
+    QrPaymentService,
   ],
 })
 export class PaymentsModule {}

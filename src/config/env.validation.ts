@@ -13,6 +13,7 @@ export type EnvironmentVariables = {
   REDIS_URL: string;
   SWAGGER_ENABLED: boolean;
   CORS_ORIGIN: string;
+  PUBLIC_CUSTOMER_WEB_ORIGIN: string;
   COOKIE_SECURE: boolean;
   COOKIE_SAME_SITE: 'lax' | 'strict' | 'none';
   DEVICE_AUTH_ENABLED: boolean;
@@ -33,6 +34,8 @@ export type EnvironmentVariables = {
   AUTH_LOCK_MINUTES: number;
   AUTH_MIN_PASSWORD_LENGTH: number;
   REQUEST_SIZE_LIMIT: string;
+  PUBLIC_CHECKOUT_TTL_SECONDS: number;
+  PUBLIC_CUSTOMER_FLOW_TTL_SECONDS: number;
 };
 
 const environments = new Set(['development', 'test', 'production']);
@@ -153,6 +156,14 @@ export function validateEnv(config: Record<string, unknown>) {
       ),
       'CORS_ORIGIN',
     ),
+    PUBLIC_CUSTOMER_WEB_ORIGIN: parseUrl(
+      optionalString(
+        config,
+        'PUBLIC_CUSTOMER_WEB_ORIGIN',
+        requireValue(config, 'FRONTEND_URL'),
+      ),
+      'PUBLIC_CUSTOMER_WEB_ORIGIN',
+    ),
     COOKIE_SECURE: parseBoolean(config.COOKIE_SECURE, nodeEnv === 'production'),
     COOKIE_SAME_SITE: parseSameSite(config.COOKIE_SAME_SITE),
     DEVICE_AUTH_ENABLED: parseBoolean(config.DEVICE_AUTH_ENABLED, false),
@@ -206,5 +217,15 @@ export function validateEnv(config: Record<string, unknown>) {
       12,
     ),
     REQUEST_SIZE_LIMIT: optionalString(config, 'REQUEST_SIZE_LIMIT', '1mb'),
+    PUBLIC_CHECKOUT_TTL_SECONDS: parsePositiveInt(
+      config.PUBLIC_CHECKOUT_TTL_SECONDS,
+      'PUBLIC_CHECKOUT_TTL_SECONDS',
+      600,
+    ),
+    PUBLIC_CUSTOMER_FLOW_TTL_SECONDS: parsePositiveInt(
+      config.PUBLIC_CUSTOMER_FLOW_TTL_SECONDS,
+      'PUBLIC_CUSTOMER_FLOW_TTL_SECONDS',
+      3600,
+    ),
   } satisfies EnvironmentVariables;
 }

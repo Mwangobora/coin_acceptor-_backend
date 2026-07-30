@@ -1,9 +1,11 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { Prisma } from '@prisma/client';
 
 import { AuditLogsService } from '../../audit-logs/audit-logs.service';
@@ -11,6 +13,7 @@ import { PrismaService } from '../../../database/prisma.service';
 import { QrProviderRegistry } from '../providers/qr-provider.registry';
 import type { QrWebhookEvent } from '../types/payment-provider.type';
 import { mapPayment } from '../mappers/payment.mapper';
+import { PublicSessionCreationService } from '../../public-charging/services/public-session-creation.service';
 import { PaymentStatusPolicy } from './payment-status.policy';
 import {
   conflictAudit,
@@ -20,11 +23,14 @@ import {
 
 @Injectable()
 export class PaymentWebhookService {
+  private readonly logger = new Logger(PaymentWebhookService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly providers: QrProviderRegistry,
     private readonly audit: AuditLogsService,
     private readonly policy: PaymentStatusPolicy,
+    private readonly moduleRef: ModuleRef,
   ) {}
 
   async receive(input: {
@@ -45,6 +51,7 @@ export class PaymentWebhookService {
     const result = await this.prisma.$transaction(async (tx) =>
       this.applyEvent(tx, input.providerName, event),
     );
+    await this.ensurePublicSession(result);
     return { received: true, payment: result };
   }
 
@@ -103,5 +110,22 @@ export class PaymentWebhookService {
         ],
       },
     });
+  }
+
+  private async ensurePublicSession(payment: {
+    paymentReference: string;
+    status: string;
+  }): Promise<void> {
+    if (payment.status !== 'confirmed') return;
+    try {
+      const service = this.moduleRef.get(PublicSessionCreationService, {
+        strict: false,
+      });
+      await service.ensureForPaymentReference(payment.paymentReference);
+    } catch (error) {
+      this.logger.warn(
+        `Public session allocation deferred for ${payment.paymentReference}: ${String(error)}`,
+      );
+    }
   }
 }

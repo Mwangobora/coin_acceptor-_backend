@@ -38,5 +38,6 @@ import { DeviceSecretHasher } from './services/device-secret-hasher.service';
     CertificateValidationService,
     CredentialRotationPolicy,
   ],
+  exports: [DeviceSecretEncryptionService],
 })
 export class DeviceCredentialsModule {}

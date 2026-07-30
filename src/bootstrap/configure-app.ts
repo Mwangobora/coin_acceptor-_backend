@@ -14,6 +14,9 @@ export function configureApp(app: INestApplication): void {
   const config = app.get(ConfigService);
   const apiPrefix = config.getOrThrow<string>('app.apiPrefix');
   const corsOrigin = config.getOrThrow<string>('security.corsOrigin');
+  const publicCustomerOrigin = config.getOrThrow<string>(
+    'security.publicCustomerWebOrigin',
+  );
   const requestSizeLimit = config.getOrThrow<string>(
     'security.requestSizeLimit',
   );
@@ -34,7 +37,10 @@ export function configureApp(app: INestApplication): void {
       verify: captureRawBody,
     }),
   );
-  app.enableCors({ origin: corsOrigin, credentials: true });
+  app.enableCors({
+    origin: [corsOrigin, publicCustomerOrigin],
+    credentials: true,
+  });
   app.useGlobalInterceptors(new RequestIdInterceptor());
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(

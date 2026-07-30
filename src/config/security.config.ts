@@ -2,6 +2,8 @@ import { registerAs } from '@nestjs/config';
 
 export const securityConfig = registerAs('security', () => ({
   corsOrigin: process.env.CORS_ORIGIN ?? process.env.FRONTEND_URL,
+  publicCustomerWebOrigin:
+    process.env.PUBLIC_CUSTOMER_WEB_ORIGIN ?? process.env.FRONTEND_URL,
   cookieSecure: process.env.COOKIE_SECURE === 'true',
   cookieSameSite: process.env.COOKIE_SAME_SITE ?? 'lax',
   deviceAuthEnabled: process.env.DEVICE_AUTH_ENABLED === 'true',
@@ -34,4 +36,10 @@ export const securityConfig = registerAs('security', () => ({
   authLockMinutes: Number(process.env.AUTH_LOCK_MINUTES ?? 15),
   authMinPasswordLength: Number(process.env.AUTH_MIN_PASSWORD_LENGTH ?? 12),
   requestSizeLimit: process.env.REQUEST_SIZE_LIMIT ?? '1mb',
+  publicCheckoutTtlSeconds: Number(
+    process.env.PUBLIC_CHECKOUT_TTL_SECONDS ?? 600,
+  ),
+  publicFlowTtlSeconds: Number(
+    process.env.PUBLIC_CUSTOMER_FLOW_TTL_SECONDS ?? 3600,
+  ),
 }));

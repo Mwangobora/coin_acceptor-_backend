@@ -3,6 +3,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 @Injectable()
 export class HardwareCommandContractValidator {
   validate(commandType: string, payload: Record<string, unknown>): void {
+    if (commandType === 'charging.prepare') {
+      requireString(payload.sessionReference, 'sessionReference');
+      requireString(payload.accessCodeVerifier, 'accessCodeVerifier');
+      requirePositiveInt(payload.durationSeconds, 'durationSeconds');
+      requirePositiveInt(payload.portNumber, 'portNumber');
+      requireLockerIdentity(payload);
+      return;
+    }
     if (commandType === 'charging.start') {
       requireString(payload.sessionReference, 'sessionReference');
       requirePositiveInt(payload.durationSeconds, 'durationSeconds');

@@ -13,6 +13,7 @@ import { DevicesModule } from './apps/devices/devices.module';
 import { HealthModule } from './apps/health/health.module';
 import { LockersModule } from './apps/lockers/lockers.module';
 import { PaymentsModule } from './apps/payments/payments.module';
+import { PublicChargingModule } from './apps/public-charging/public-charging.module';
 import { ReportsModule } from './apps/reports/reports.module';
 import { SettingsModule } from './apps/settings/settings.module';
 import { StationsModule } from './apps/stations/stations.module';
@@ -36,6 +37,7 @@ import { PrismaModule } from './database/prisma.module';
     ChargingPortsModule,
     ChargingSessionsModule,
     PaymentsModule,
+    PublicChargingModule,
     LockersModule,
     AlertsModule,
     ReportsModule,
