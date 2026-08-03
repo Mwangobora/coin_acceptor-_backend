@@ -7,6 +7,10 @@ import {
   PROTOTYPE_HARDWARE_CAPABILITIES,
   PROTOTYPE_HARDWARE_PIN_MAP,
 } from '../src/apps/settings/constants/hardware-settings.constants';
+import { PUBLIC_QR_SETTING_KEY } from '../src/apps/public-charging/constants/public-charging.constants';
+
+const DEMO_PUBLIC_QR_TOKEN_HASH =
+  '209028f2f52ed134162efd4b239bc6768594fda8c9cf4b29f6fd9ec4bdf27392';
 
 export function settings() {
   return [
@@ -50,6 +54,10 @@ export function settings() {
       'json',
       PROTOTYPE_HARDWARE_CAPABILITIES,
     ),
+    setting(5, PUBLIC_QR_SETTING_KEY, 'device', ids.station, ids.device, 'json', {
+      hashes: [{ sha256: DEMO_PUBLIC_QR_TOKEN_HASH, status: 'active' }],
+      label: 'Demo public charging QR',
+    }),
   ];
 }
 
