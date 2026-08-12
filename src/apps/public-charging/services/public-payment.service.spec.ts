@@ -63,7 +63,6 @@ function serviceWith(
     {} as never,
     flows as never,
     {} as never,
-    {} as never,
     sessions as never,
     { record: jest.fn() } as never,
   );

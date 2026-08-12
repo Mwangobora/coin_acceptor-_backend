@@ -81,9 +81,8 @@ export function port(index: number) {
 
 export function packages() {
   return [
-    packageRow(0, 'DEMO-15MIN', 'Demo 15 Minutes', 900, 500),
-    packageRow(1, 'DEMO-30MIN', 'Demo 30 Minutes', 1800, 1000),
-    packageRow(2, 'DEMO-60MIN', 'Demo 60 Minutes', 3600, 1800),
+    packageRow(0, 'QUICK-200', 'Quick Charge', 900, 200),
+    packageRow(1, 'STANDARD-500', 'Standard Charge', 2700, 500),
   ];
 }
 

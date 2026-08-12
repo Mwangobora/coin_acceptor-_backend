@@ -4,11 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { payments, qr_payment_transactions } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 
 import { AuditLogsService } from '../../audit-logs/audit-logs.service';
 import { PrismaService } from '../../../database/prisma.service';
 import { paymentReference } from '../../payments/services/payment-reference';
-import { QrPaymentService } from '../../payments/services/qr-payment.service';
+import type { PublicPaymentMethod } from '../dto/create-public-payment.dto';
 import { AnonymousCheckoutService } from './anonymous-checkout.service';
 import { AnonymousCustomerFlowService } from './anonymous-customer-flow.service';
 import { PublicPackageService } from './public-package.service';
@@ -26,7 +27,6 @@ export class PublicPaymentService {
     private readonly checkout: AnonymousCheckoutService,
     private readonly flows: AnonymousCustomerFlowService,
     private readonly packages: PublicPackageService,
-    private readonly qr: QrPaymentService,
     private readonly sessions: PublicSessionCreationService,
     private readonly audit: AuditLogsService,
   ) {}
@@ -35,6 +35,7 @@ export class PublicPaymentService {
     checkoutToken: string;
     packageId: string;
     idempotencyKey: string;
+    paymentMethod: PublicPaymentMethod;
   }) {
     const checkout = await this.checkout.require(input.checkoutToken);
     const pkg = await this.packages.requireForPayment({
@@ -46,11 +47,13 @@ export class PublicPaymentService {
       where: { idempotency_key: key },
       include: { qr_payment_transactions: true },
     });
-    const payment = existing ?? (await this.createPayment(checkout, pkg, key));
+    const payment =
+      existing ??
+      (await this.createPayment(checkout, pkg, key, input.paymentMethod));
     if (existing) this.assertIdempotent(existing, pkg.id, checkout.deviceId);
     const qr =
       payment.qr_payment_transactions ??
-      (await this.qr.createTransaction(payment));
+      (await this.createAcceptedTransaction(payment, input.paymentMethod));
     const flow = await this.flows.issue({
       checkoutHash: checkout.checkoutHash,
       stationId: checkout.stationId,
@@ -97,9 +100,17 @@ export class PublicPaymentService {
 
   private async createPayment(
     checkout: { stationId: string; deviceId: string; checkoutHash: string },
-    pkg: { id: string; price_minor: bigint; currency: string },
+    pkg: {
+      id: string;
+      name: string;
+      price_minor: bigint;
+      currency: string;
+      duration_seconds: number;
+    },
     idempotencyKey: string,
+    paymentMethod: PublicPaymentMethod,
   ) {
+    const now = new Date();
     return this.prisma.payments.create({
       data: {
         payment_reference: paymentReference(),
@@ -108,17 +119,47 @@ export class PublicPaymentService {
         charging_package_id: pkg.id,
         payment_method: 'qr',
         source: 'mobile',
-        status: 'pending',
+        status: 'confirmed',
         expected_amount_minor: pkg.price_minor,
+        received_amount_minor: pkg.price_minor,
         currency: pkg.currency,
-        package_name_snapshot: 'pending',
-        package_duration_seconds_snapshot: 1,
+        package_name_snapshot: pkg.name,
+        package_duration_seconds_snapshot: pkg.duration_seconds,
         idempotency_key: idempotencyKey,
+        initiated_at: now,
+        confirmed_at: now,
         metadata: publicPaymentMetadata({
           checkoutHash: checkout.checkoutHash,
+          paymentMethod,
         }),
       },
       include: { qr_payment_transactions: true },
+    });
+  }
+
+  private async createAcceptedTransaction(
+    payment: payments,
+    paymentMethod: PublicPaymentMethod,
+  ) {
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const merchantReference = `PAY-${payment.payment_reference}-${randomUUID()}`;
+    return this.prisma.qr_payment_transactions.create({
+      data: {
+        payment_id: payment.id,
+        provider: paymentMethod,
+        merchant_reference: merchantReference,
+        provider_transaction_id: `${paymentMethod}-${payment.payment_reference}`,
+        qr_reference: payment.payment_reference,
+        provider_status: 'confirmed',
+        amount_minor: payment.expected_amount_minor,
+        currency: payment.currency,
+        qr_expires_at: expiresAt,
+        raw_response: {
+          provider: paymentMethod,
+          status: 'confirmed',
+          paymentReference: payment.payment_reference,
+        },
+      },
     });
   }
 

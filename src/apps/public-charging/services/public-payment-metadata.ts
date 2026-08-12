@@ -2,10 +2,12 @@ import type { Prisma } from '@prisma/client';
 
 export function publicPaymentMetadata(input: {
   checkoutHash: string;
+  paymentMethod?: string;
 }): Prisma.InputJsonObject {
   return {
     channel: 'public_customer',
     checkoutHash: input.checkoutHash,
+    ...(input.paymentMethod ? { paymentMethod: input.paymentMethod } : {}),
   };
 }
 

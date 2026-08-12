@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { createHash, createHmac, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import request from 'supertest';
 
@@ -57,8 +57,8 @@ describe('public charging slot allocation concurrency', () => {
     const second = await createPayment();
 
     await Promise.all([
-      confirmPayment(first.paymentReference, 'one'),
-      confirmPayment(second.paymentReference, 'two'),
+      readPaymentStatus(first),
+      readPaymentStatus(second),
     ]);
 
     const sessions = await prisma.charging_sessions.findMany({
@@ -72,7 +72,10 @@ describe('public charging slot allocation concurrency', () => {
     expect(alerts.length).toBeGreaterThanOrEqual(1);
   });
 
-  async function createPayment(): Promise<{ paymentReference: string }> {
+  async function createPayment(): Promise<{
+    paymentReference: string;
+    customerFlowToken: string;
+  }> {
     const checkout = await request(server)
       .post('/api/v1/public/charging/qr/resolve')
       .send({ qrToken })
@@ -86,36 +89,28 @@ describe('public charging slot allocation concurrency', () => {
       .send({
         packageId: 'PUBLIC_CONCURRENT_PACKAGE',
         idempotencyKey: randomUUID(),
+        paymentMethod: 'mpesa',
       })
       .expect(201);
-    return response.body as { paymentReference: string };
+    return response.body as {
+      paymentReference: string;
+      customerFlowToken: string;
+    };
   }
 
-  async function confirmPayment(reference: string, suffix: string) {
-    const qr = await prisma.qr_payment_transactions.findFirstOrThrow({
-      where: { payments: { payment_reference: reference } },
-    });
-    const body = JSON.stringify({
-      merchantReference: qr.merchant_reference,
-      providerTransactionId: `concurrent-provider-${suffix}`,
-      status: 'confirmed',
-      amountMinor: 500,
-      currency: 'TZS',
-    });
+  async function readPaymentStatus(payment: {
+    paymentReference: string;
+    customerFlowToken: string;
+  }) {
     await request(server)
-      .post('/api/v1/payment-webhooks/mock')
-      .set('x-mock-signature', signature(body))
-      .send(body)
-      .expect(201);
+      .get(
+        `/api/v1/public/charging/payments/${payment.paymentReference}/status`,
+      )
+      .set('x-customer-flow-token', payment.customerFlowToken)
+      .expect(200);
   }
 });
 
 function sha256(value: string): string {
   return createHash('sha256').update(value).digest('hex');
-}
-
-function signature(body: string): string {
-  return createHmac('sha256', 'test-mock-webhook-secret')
-    .update(Buffer.from(body))
-    .digest('hex');
 }

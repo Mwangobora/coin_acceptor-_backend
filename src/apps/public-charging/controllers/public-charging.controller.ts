@@ -59,6 +59,7 @@ export class PublicChargingController {
       checkoutToken: token,
       packageId: dto.packageId,
       idempotencyKey: dto.idempotencyKey,
+      paymentMethod: dto.paymentMethod,
     });
   }
 

@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { createHash, createHmac, randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Server } from 'node:http';
 import request from 'supertest';
 
@@ -97,20 +97,24 @@ describe('public charging flow', () => {
     const payment = await request(server)
       .post('/api/v1/public/charging/payments')
       .set('x-checkout-token', checkout.checkoutToken)
-      .send({ packageId: 'PUBLIC_PACKAGE', idempotencyKey: cryptoUuid() })
+      .send({
+        packageId: 'PUBLIC_PACKAGE',
+        idempotencyKey: cryptoUuid(),
+        paymentMethod: 'mpesa',
+      })
       .expect(201);
     const paymentBody = payment.body as PaymentBody;
     expect(paymentBody).toMatchObject({
       amountMinor: '500',
       currency: 'TZS',
-      status: 'pending',
+      provider: 'mpesa',
+      status: 'confirmed',
     });
     expect(paymentBody.customerFlowToken).toEqual(expect.any(String));
   });
 
   it('creates a session after confirmation and returns PIN only once', async () => {
     const payment = await createPayment();
-    await confirmPayment(payment.paymentReference);
     const status = await request(server)
       .get(
         `/api/v1/public/charging/payments/${payment.paymentReference}/status`,
@@ -171,27 +175,13 @@ describe('public charging flow', () => {
     const response = await request(server)
       .post('/api/v1/public/charging/payments')
       .set('x-checkout-token', checkout.checkoutToken)
-      .send({ packageId: 'PUBLIC_PACKAGE', idempotencyKey: cryptoUuid() })
+      .send({
+        packageId: 'PUBLIC_PACKAGE',
+        idempotencyKey: cryptoUuid(),
+        paymentMethod: 'mpesa',
+      })
       .expect(201);
     return response.body as PaymentBody;
-  }
-
-  async function confirmPayment(reference: string) {
-    const qr = await prisma.qr_payment_transactions.findFirstOrThrow({
-      where: { payments: { payment_reference: reference } },
-    });
-    const body = JSON.stringify({
-      merchantReference: qr.merchant_reference,
-      providerTransactionId: 'public-provider-confirmed',
-      status: 'confirmed',
-      amountMinor: 500,
-      currency: 'TZS',
-    });
-    await request(server)
-      .post('/api/v1/payment-webhooks/mock')
-      .set('x-mock-signature', signature(body))
-      .send(body)
-      .expect(201);
   }
 
   async function expectNoCommandQueuedBeforePinClaim(reference: string) {
@@ -214,12 +204,6 @@ describe('public charging flow', () => {
       const payload = command.payload as Record<string, unknown> | null;
       return payload?.sessionReference === reference;
     });
-  }
-
-  function signature(body: string) {
-    return createHmac('sha256', 'test-mock-webhook-secret')
-      .update(Buffer.from(body))
-      .digest('hex');
   }
 });
 

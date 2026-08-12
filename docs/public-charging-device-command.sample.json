@@ -1,0 +1,32 @@
+{
+  "event": "payment.accepted",
+  "version": 1,
+  "generatedAt": "2026-08-12T13:00:00.000Z",
+  "payment": {
+    "paymentReference": "PAY-20260812-ABC123",
+    "method": "mpesa",
+    "status": "confirmed",
+    "amount": 500,
+    "currency": "TZS"
+  },
+  "charging": {
+    "sessionReference": "SESSION-20260812-ABC123",
+    "packageCode": "STANDARD-500",
+    "durationSeconds": 2700
+  },
+  "device": {
+    "devicePublicCode": "CHARGER-001",
+    "lockerNumber": 1,
+    "portNumber": 1
+  },
+  "command": {
+    "commandType": "charging.prepare",
+    "payload": {
+      "sessionReference": "SESSION-20260812-ABC123",
+      "lockerNumber": 1,
+      "portNumber": 1,
+      "durationSeconds": 2700,
+      "accessCodeVerifier": "hmac-sha256:device-verifier-value"
+    }
+  }
+}
