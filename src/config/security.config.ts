@@ -27,7 +27,7 @@ export const securityConfig = registerAs('security', () => ({
   paymentPendingWindowSeconds: Number(
     process.env.PAYMENT_PENDING_WINDOW_SECONDS ?? 600,
   ),
-  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  redisUrl: process.env.REDIS_URL,
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
   jwtAccessTtl: process.env.JWT_ACCESS_TTL ?? '7d',

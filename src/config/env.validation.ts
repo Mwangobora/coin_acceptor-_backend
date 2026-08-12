@@ -10,7 +10,7 @@ export type EnvironmentVariables = {
   API_PREFIX: string;
   FRONTEND_URL: string;
   DATABASE_URL: string;
-  REDIS_URL: string;
+  REDIS_URL?: string;
   SWAGGER_ENABLED: boolean;
   CORS_ORIGIN: string;
   PUBLIC_CUSTOMER_WEB_ORIGIN: string;
@@ -140,10 +140,10 @@ export function validateEnv(config: Record<string, unknown>) {
       requireValue(config, 'DATABASE_URL'),
       'DATABASE_URL',
     ),
-    REDIS_URL: parseUrl(
-      optionalString(config, 'REDIS_URL', 'redis://localhost:6379'),
-      'REDIS_URL',
-    ),
+    REDIS_URL:
+      config.REDIS_URL === undefined || config.REDIS_URL === ''
+        ? undefined
+        : parseUrl(optionalString(config, 'REDIS_URL', ''), 'REDIS_URL'),
     SWAGGER_ENABLED: parseBoolean(
       config.SWAGGER_ENABLED,
       nodeEnv !== 'production',

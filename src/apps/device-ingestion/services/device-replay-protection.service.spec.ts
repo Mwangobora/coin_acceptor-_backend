@@ -12,7 +12,7 @@ import { DeviceReplayProtectionService } from './device-replay-protection.servic
 describe('DeviceReplayProtectionService', () => {
   it('reserves nonces with Redis SET NX and expiration', async () => {
     const service = new DeviceReplayProtectionService({
-      getOrThrow: jest.fn().mockReturnValue('redis://localhost:6379'),
+      get: jest.fn().mockReturnValue('redis://localhost:6379'),
     } as never);
 
     await expect(
@@ -28,5 +28,18 @@ describe('DeviceReplayProtectionService', () => {
     );
     service.onModuleDestroy();
     expect(redisInstance.disconnect).toHaveBeenCalled();
+  });
+
+  it('falls back to in-memory nonce reservation when Redis is not configured', async () => {
+    const service = new DeviceReplayProtectionService({
+      get: jest.fn().mockReturnValue(undefined),
+    } as never);
+
+    await expect(
+      service.reserveNonce('credential-1', 'nonce-2', 300),
+    ).resolves.toBe(true);
+    await expect(
+      service.reserveNonce('credential-1', 'nonce-2', 300),
+    ).resolves.toBe(false);
   });
 });
