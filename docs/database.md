@@ -29,6 +29,32 @@ npm run db:schema:apply
 
 The command refuses to reapply the SQL when the schema already contains tables.
 
+## Apply Schema To A Remote Database (Render, etc.)
+
+Managed Postgres instances (Render, RDS, etc.) do not run
+`docker-entrypoint-initdb.d`, so a freshly provisioned production database has
+no tables until you apply the schema to it directly. Deploying the app without
+doing this first fails with Prisma error `P2021` (table does not exist).
+
+```bash
+DATABASE_URL="<external-connection-string>?schema=charging_system" \
+  npm run db:schema:apply:remote
+```
+
+Use the provider's *external* connection string (the one reachable from your
+machine, not the internal one meant for services in the same private
+network). The `?schema=charging_system` suffix matters: the SQL file creates
+everything under the `charging_system` schema, and without that suffix Prisma
+defaults to `public` and will not find the tables even after they exist. Set
+the same `DATABASE_URL` (including the `?schema=charging_system` suffix) as
+the web service's environment variable so the running app looks in the right
+place.
+
+The command refuses to reapply the SQL when the target schema already
+contains tables, same as `db:schema:apply`. It also works without `psql`
+installed locally — it falls back to running `psql` through
+`docker run postgres:16-alpine` if the binary isn't found on your `PATH`.
+
 ## Verify Schema
 
 ```bash
