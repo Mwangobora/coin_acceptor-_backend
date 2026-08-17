@@ -26,6 +26,10 @@ import { DeviceEventReadService } from './services/device-event-read.service';
 import { DeviceEventService } from './services/device-event.service';
 import { DeviceTelemetryReadService } from './services/device-telemetry-read.service';
 import type { DeviceAuthRequest } from './types/authenticated-device.type';
+import {
+  IngestDeviceEventDocs,
+  PollDeviceCommandsDocs,
+} from './device-ingestion.swagger';
 
 @ApiTags('device-ingestion')
 @Controller({ version: API_VERSION })
@@ -39,6 +43,7 @@ export class DeviceIngestionController {
 
   @Post('device-ingestion/events')
   @UseGuards(DeviceAuthGuard)
+  @IngestDeviceEventDocs()
   ingest(@Body() dto: CreateDeviceEventDto, @Req() req: DeviceAuthRequest) {
     return this.events.ingest({
       auth: req.deviceAuth!,
@@ -50,6 +55,7 @@ export class DeviceIngestionController {
 
   @Get('device-ingestion/commands')
   @UseGuards(DeviceAuthGuard)
+  @PollDeviceCommandsDocs()
   pollCommands(@Req() req: DeviceAuthRequest) {
     return this.commandPolling.poll(req.deviceAuth!);
   }

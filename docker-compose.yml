@@ -16,7 +16,7 @@ services:
       API_PREFIX: api/v1
       FRONTEND_URL: http://localhost:3000
       CORS_ORIGIN: http://localhost:3000
-      PUBLIC_CUSTOMER_WEB_ORIGIN: http://localhost:3001
+      PUBLIC_CUSTOMER_WEB_ORIGIN: https://coin-web-weld.vercel.app
       SWAGGER_ENABLED: "true"
       COOKIE_SECURE: "false"
       COOKIE_SAME_SITE: lax

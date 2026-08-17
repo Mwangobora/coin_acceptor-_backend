@@ -1,0 +1,121 @@
+{
+  "contractName": "CargoFlow phone charging payment-to-device flow",
+  "version": 1,
+  "currency": "TZS",
+  "website": {
+    "qrPageUrl": "https://coin-web-weld.vercel.app/charge/cmsqr_dVkGhCMkpUw2wAh5ZkSGHU_D5FbncfcQ",
+    "paymentMethods": ["mpesa", "mixx_by_yas", "airtel_money", "halopesa"],
+    "packages": [
+      {
+        "packageId": "QUICK-200",
+        "label": "TZS 200",
+        "amountMinor": "200",
+        "durationSeconds": 900
+      },
+      {
+        "packageId": "STANDARD-500",
+        "label": "TZS 500",
+        "amountMinor": "500",
+        "durationSeconds": 2700
+      }
+    ]
+  },
+  "paymentAcceptedPayload": {
+    "event": "payment.accepted",
+    "generatedAt": "2026-08-13T14:30:00.000+03:00",
+    "payment": {
+      "paymentReference": "PAY-20260813-ABC123",
+      "paymentMethod": "mpesa",
+      "status": "confirmed",
+      "amountMinor": "200",
+      "currency": "TZS"
+    },
+    "charging": {
+      "sessionReference": "SESSION-20260813-ABC123",
+      "packageId": "QUICK-200",
+      "durationSeconds": 900
+    },
+    "device": {
+      "devicePublicCode": "DEVICE-001",
+      "lockerNumber": 1,
+      "portNumber": 1
+    }
+  },
+  "deviceCommandPollResponse": {
+    "commands": [
+      {
+        "id": "8d2b0835-85bc-45d4-a5df-d818b9013f51",
+        "commandType": "charging.prepare",
+        "payload": {
+          "sessionReference": "SESSION-20260813-ABC123",
+          "lockerNumber": 1,
+          "portNumber": 1,
+          "durationSeconds": 900,
+          "accessCodeVerifier": "hmac-sha256:REPLACE_WITH_BACKEND_VERIFIER"
+        },
+        "requestedAt": "2026-08-13T11:30:00.000Z",
+        "expiresAt": "2026-08-13T11:40:00.000Z"
+      }
+    ]
+  },
+  "deviceEventsToBackend": [
+    {
+      "externalEventId": "DEVICE-001-000001",
+      "eventCategory": "command",
+      "eventType": "command.acknowledged",
+      "sequenceNumber": 1,
+      "occurredAt": "2026-08-13T11:30:05.000Z",
+      "firmwareVersion": "esp32-v1",
+      "payload": {
+        "commandId": "8d2b0835-85bc-45d4-a5df-d818b9013f51",
+        "result": "accepted"
+      }
+    },
+    {
+      "externalEventId": "DEVICE-001-000002",
+      "eventCategory": "locker",
+      "eventType": "locker.opened",
+      "sequenceNumber": 2,
+      "occurredAt": "2026-08-13T11:31:00.000Z",
+      "firmwareVersion": "esp32-v1",
+      "payload": {
+        "sessionReference": "SESSION-20260813-ABC123",
+        "lockerNumber": 1
+      }
+    },
+    {
+      "externalEventId": "DEVICE-001-000003",
+      "eventCategory": "session",
+      "eventType": "charging.started",
+      "sequenceNumber": 3,
+      "occurredAt": "2026-08-13T11:32:00.000Z",
+      "firmwareVersion": "esp32-v1",
+      "payload": {
+        "sessionReference": "SESSION-20260813-ABC123",
+        "lockerNumber": 1,
+        "portNumber": 1
+      }
+    },
+    {
+      "externalEventId": "DEVICE-001-000004",
+      "eventCategory": "session",
+      "eventType": "charging.completed",
+      "sequenceNumber": 4,
+      "occurredAt": "2026-08-13T11:47:00.000Z",
+      "firmwareVersion": "esp32-v1",
+      "payload": {
+        "sessionReference": "SESSION-20260813-ABC123",
+        "lockerNumber": 1,
+        "portNumber": 1,
+        "chargedSeconds": 900
+      }
+    }
+  ],
+  "rules": {
+    "deviceMustNotSendTrustedMoney": true,
+    "deviceMustNotInventDuration": true,
+    "deviceMustNotInventSessionReference": true,
+    "deviceMustPollBackendCommands": true,
+    "backendOwnsPaymentConfirmation": true
+  }
+}

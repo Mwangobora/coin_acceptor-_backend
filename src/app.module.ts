@@ -11,6 +11,7 @@ import { DeviceCredentialsModule } from './apps/device-credentials/device-creden
 import { DeviceIngestionModule } from './apps/device-ingestion/device-ingestion.module';
 import { DevicesModule } from './apps/devices/devices.module';
 import { HealthModule } from './apps/health/health.module';
+import { IotPaymentContractModule } from './apps/iot-contract/iot-payment-contract.module';
 import { LockersModule } from './apps/lockers/lockers.module';
 import { PaymentsModule } from './apps/payments/payments.module';
 import { PublicChargingModule } from './apps/public-charging/public-charging.module';
@@ -34,6 +35,7 @@ import { PrismaModule } from './database/prisma.module';
     DeviceCommandsModule,
     DeviceCredentialsModule,
     DeviceIngestionModule,
+    IotPaymentContractModule,
     ChargingPortsModule,
     ChargingSessionsModule,
     PaymentsModule,
