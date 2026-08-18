@@ -5,7 +5,14 @@ import { DeviceAuthService } from './device-auth.service';
 describe('DeviceAuthService', () => {
   const apiKeys = { authenticate: jest.fn() };
   const hmac = { authenticate: jest.fn() };
-  const service = new DeviceAuthService(apiKeys as never, hmac as never);
+  const config = { get: jest.fn(() => true) };
+  const prisma = { devices: { findFirst: jest.fn() } };
+  const service = new DeviceAuthService(
+    apiKeys as never,
+    hmac as never,
+    config as never,
+    prisma as never,
+  );
 
   beforeEach(() => jest.clearAllMocks());
 
